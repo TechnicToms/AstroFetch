@@ -29,15 +29,17 @@ jobs:
         run: |
           echo '## Ruff Lint' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          uv run ruff check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          uv run ruff check --show-files 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ruff format check
         run: |
           echo '## Ruff Format' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          uv run ruff format --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          EXIT=0
+          uv run ruff format --check --diff 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || EXIT=$?
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $EXIT
 
   typecheck:
     runs-on: ubuntu-latest
