@@ -26,17 +26,18 @@ The single most important deliverable. Everything else builds on it.
 - `astrofetch.data.stac`: query the USGS ARD catalog root with pystac-client, filter by collection and bbox.
 - `astrofetch.data.raster`: windowed COG reads via rasterio, honoring scale/offset to return physical values, resampling to a requested resolution.
 - `astrofetch.data.grid`: define a common target grid (equirectangular, IAU 2015 Moon), reproject and stack layers into a (C, H, W) float tensor with a per-channel metadata record.
-- Public API target:
+- The sampler plugs into `InstrumentDataset.read(bbox)`, replacing the Phase 0 synthetic placeholder. Public API target (already the shipped Phase 0 surface):
 
 ```python
 import astrofetch as af
-patch = af.moon.fetch(
-    layers=["kaguya_tc_dtm", "lroc_wac"],
-    bbox=(-60.0, 5.0, -55.0, 10.0),
-    resolution=100,   # meters per pixel
+bbox = (-60.0, 5.0, -55.0, 10.0)
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC(
+    bbox=bbox, resolution=100
 )
-patch.tensor   # torch.Tensor (C, H, W)
-patch.meta     # projection, units, provenance per channel
+sample = next(iter(moondata))
+sample["image"]   # torch.Tensor (C, H, W), physical values
+sample["mask"]    # torch.BoolTensor (C, H, W), validity (nodata gaps)
+sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
 ```
 
 - Local disk cache keyed by (collection, item, window, resolution), transparent and clearable.
@@ -45,7 +46,7 @@ Exit criteria: the quickstart notebook fetches a Reiner Gamma patch with two lay
 
 ## Phase 2: Datasets and transforms (2 to 3 weekends)
 
-- `astrofetch.moon.datasets`: torch `Dataset` classes built on the sampler. First: `RandomRegionDataset` (sample random bboxes from a region list) and `GridTileDataset` (deterministic tiling of an ROI).
+- `astrofetch.moon.datasets`: random-bbox sampling already ships inside the instrument datasets (Phase 0); add `GridTileDataset` (deterministic tiling of an ROI) over the same `read(bbox)` interface, plus region-list sampling for the random path.
 - Samplers that respect spatial autocorrelation for train/val/test splits (block splitting, not random pixels).
 - Transforms: per-channel normalization stats, nodata masking, polar/equatorial projection handling made explicit.
 - Secondary access modes behind the same interface: WMS/WMTS rendered mode (clearly labeled non-quantitative) and an ODE REST granule mode stub for later full-fidelity work.

@@ -1,12 +1,13 @@
 """AstroFetch: PyTorch-friendly, ML-ready access to planetary science data.
 
-Request a bounding box, receive a coregistered multichannel tensor. AstroFetch
-is a thin layer over existing archive tooling (STAC, COGs), never a mirror.
+One dataset class per instrument; combine them with ``&`` to receive
+coregistered multichannel samples. AstroFetch is a thin layer over existing
+archive tooling (STAC, COGs), never a mirror.
 """
 
 from astrofetch import moon
-from astrofetch.moon.datasets import LunarMoon
+from astrofetch.moon import MOON, IntersectionDataset, KaguyaTC, LROCWAC
 
 __version__ = "0.1.0"
 
-__all__ = ["LunarMoon", "moon", "__version__"]
+__all__ = ["MOON", "IntersectionDataset", "KaguyaTC", "LROCWAC", "moon", "__version__"]

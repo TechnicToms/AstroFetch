@@ -26,32 +26,53 @@ uv add astrofetch      # or: pip install astrofetch
 
 ## Usage
 
+One dataset class per instrument; combine instruments with `&` to stack their
+channels over the overlapping region:
+
 ```python
 import astrofetch as af
 
-moondata = af.LunarMoon(
-    layers=["kaguya_tc_dtm", "lroc_wac"],
-    bbox=(-60.0, 5.0, -55.0, 10.0),  # west, south, east, north (degrees)
-    resolution=100,                   # meters per pixel
+bbox = (-60.0, 5.0, -55.0, 10.0)  # west, south, east, north (degrees)
+
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC(
+    bbox=bbox, resolution=100
 )
 
-for batch in moondata:
-    batch.tensor  # torch.Tensor (C, H, W)
-    batch.meta    # projection, units, provenance per channel
+for sample in moondata:
+    sample["image"]   # torch.Tensor (C, H, W), one channel per layer
+    sample["mask"]    # torch.BoolTensor (C, H, W), validity (nodata gaps)
+    sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
 ```
 
-It plugs directly into a PyTorch training loop:
+It plugs directly into a PyTorch training loop — samples are plain dicts, so
+the default collation just works:
 
 ```python
 from torch.utils.data import DataLoader
 
 loader = DataLoader(moondata, batch_size=16)
 for batch in loader:
-    ...  # train on lunar patches, no custom fetch code
+    batch["image"]  # torch.Tensor (16, C, H, W)
+```
+
+Not sure what data exists? The `MOON` catalog enumerates probes, instruments,
+and products, and points at the dataset classes:
+
+```python
+from astrofetch.moon import MOON
+
+for probe in MOON.probes.values():
+    for instrument in probe.instruments.values():
+        print(probe.name, "/", instrument.name, "->", sorted(instrument.products))
+
+MOON.probes["lro"].instruments["lroc_wac"].dataset  # <class 'astrofetch.moon.datasets.LROCWAC'>
 ```
 
 ## Design principles
 
+- **One dataset class per instrument.** `KaguyaTC`, `LROCWAC`, … (the TorchGeo pattern);
+  cross-instrument stacks are explicit compositions via `&` (`IntersectionDataset`).
+  Probes and bodies are catalog metadata, never dataset boundaries.
 - **Wrap, do not reimplement.** `pdr` reads PDS products, `planetarypy` finds and fetches
   them, `pystac-client` queries STAC, `rasterio` reads COGs. AstroFetch composes these.
 - **STAC + COGs are the primary source.** Windowed HTTP range reads give real physical
@@ -68,7 +89,7 @@ for batch in loader:
 |:-----:|:------------|:------:|
 | 0 | Scaffolding — package, CI, docs, target API | In progress |
 | 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | Planned |
-| 2 | Datasets and transforms — random-region and grid-tile datasets, spatial splits | Planned |
+| 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms | Planned |
 | 3 | Pretrained weights — multimodal MAE encoder and fine-tuning heads | Planned |
 | 4 | First frozen benchmark — checksummed, DOI-minted, reproducible | Planned |
 | 5 | Release and community — PyPI, planetarypy affiliation, paper | Planned |

@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, and others) worki
 
 ## What this project is
 
-AstroFetch is an open source, PyTorch-friendly library for ML-ready access to planetary science data, starting with the Moon. The core API: request a bounding box and a list of layers, receive a coregistered multichannel `torch.Tensor` with per-channel provenance metadata. It is a thin composition layer over existing archive tooling.
+AstroFetch is an open source, PyTorch-friendly library for ML-ready access to planetary science data, starting with the Moon. The core API: one dataset class per instrument (`KaguyaTC`, `LROCWAC`, ...), each yielding TorchGeo-style sample dicts with a coregistered multichannel `"image"` tensor, a validity `"mask"`, and per-channel provenance; instruments compose with `&` (`IntersectionDataset`) to stack channels over their overlapping region. Probes and bodies are discovery-catalog metadata (`MOON`), never dataset boundaries. It is a thin composition layer over existing archive tooling.
 
 ## Architecture at a glance
 
@@ -19,8 +19,8 @@ src/astrofetch/
     tiles.py          # secondary rendered mode: USGS WMS, Moon Trek WMTS
     ode.py            # granule mode: ODE REST + pdr (full-fidelity, later phase)
   moon/
-    layers.py         # layer registry: name -> STAC collection + read config
-    datasets/         # torch Dataset classes (RandomRegionDataset, GridTileDataset)
+    layers.py         # layer registry (name -> STAC collection + read config) + Body/Probe/Instrument catalog (MOON)
+    datasets.py       # instrument dataset classes (InstrumentDataset, KaguyaTC, LROCWAC) + IntersectionDataset
     checksums.py      # pinned item IDs and hashes for frozen benchmarks
   models/
     mae.py            # multimodal MAE encoder + heads
@@ -40,7 +40,7 @@ tests/
 4. **Cache is disposable, benchmarks are frozen.** Nothing in the cache layer may be load-bearing for reproducibility. Frozen benchmark data is pinned by STAC item ID and checksum in `moon/checksums.py` and hosted externally (Hugging Face / Zenodo), never committed to the repo.
 5. **Be polite to archive servers.** Default concurrency is low, retries use exponential backoff, and any code path that could issue many requests must go through the rate-limited session in `data/stac.py` / `data/tiles.py`. Never write a loop that hammers NASA or USGS servers.
 6. **Body-namespaced layout.** Moon-specific code lives under `moon/`. Body-agnostic code (grid math, COG reads, caching) lives under `data/`. Adding Mars must be a new sibling module, not edits scattered through existing files.
-7. **Tensors are (C, H, W) float32** unless a dataset documents otherwise. Every returned patch carries metadata: projection, resolution, units per channel, and source item IDs.
+7. **Samples are dicts with a fixed contract.** `"image"` is (C, H, W) float32 (physical values, channel i = `layers[i]`), `"mask"` is (C, H, W) bool validity, plus `"layers"`, `"bbox"`, `"crs"`, and `"resolution"` provenance keys. Datasets that deviate must document it. Samples must collate under the default `DataLoader` collation.
 
 ## Dev environment and commands
 
@@ -70,7 +70,7 @@ tests/
 - Coordinates are IAU 2015 Moon (ocentric, longitude 0 to 360 or -180 to 180 must be normalized at the API boundary; internal convention is -180 to 180).
 - Equatorial data uses equirectangular projection; polar data uses polar stereographic. `data/grid.py` owns this decision; never assume equirectangular blindly near the poles.
 - COGs from the USGS ARD catalog often store 16-bit DN with scale/offset to physical units (for example Kaguya TC radiance). Always apply scale/offset in `raster.py`; downstream code assumes physical values.
-- Nodata regions are common (orbital swaths do not cover everything). Patches carry a validity mask; do not silently zero-fill.
+- Nodata regions are common (orbital swaths do not cover everything). Every sample carries a boolean validity tensor under its `"mask"` key; do not silently zero-fill.
 
 ## What NOT to do
 
