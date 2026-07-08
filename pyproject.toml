@@ -1,0 +1,31 @@
+[project]
+name = "astrofetch"
+version = "0.1.0"
+description = "PyTorch-friendly, ML-ready access to planetary science data, starting with the Moon."
+readme = "README.md"
+authors = [
+    { name = "Tom Sander", email = "tom.sander@tu-dortmund.de" }
+]
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
