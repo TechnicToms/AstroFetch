@@ -17,16 +17,9 @@ src/astrofetch/
     grid.py           # target grid definition, reprojection, channel stacking
     cache.py          # throwaway local cache, keyed by (collection, item, window, res)
     tiles.py          # secondary rendered mode: USGS WMS, Moon Trek WMTS
-    ode.py            # granule mode: ODE REST + pdr (full-fidelity, later phase)
   moon/
     layers.py         # layer registry (name -> STAC collection + read config) + Body/Probe/Instrument catalog (MOON)
     datasets.py       # instrument dataset classes (InstrumentDataset, KaguyaTC, LROCWAC) + IntersectionDataset
-    checksums.py      # pinned item IDs and hashes for frozen benchmarks
-  models/
-    mae.py            # multimodal MAE encoder + heads
-    weights.py        # pretrained checkpoint registry (Hugging Face Hub)
-  benchmarks/
-    moon/             # frozen tasks: splits, metrics, eval harness
 tests/
   unit/               # network fully mocked, runs in CI
   live/               # hits real endpoints, manual trigger only
@@ -34,10 +27,10 @@ tests/
 
 ## Non-negotiable design rules
 
-1. **Never reimplement archive tooling.** pdr reads PDS products, planetarypy discovers and fetches them, pystac-client queries STAC, rasterio reads rasters. If you find yourself parsing a PDS label or writing tile math by hand, stop and use the existing library.
+1. **Default to wrapping archive tooling; reimplement only with a measured reason.** pystac-client queries STAC, rasterio reads and windows COGs. Reach for these first — reinventing them is usually wasted effort and a maintenance burden. Two carve-outs: (a) **never** hand-roll domain-specific correctness — map-projection math, COG windowing, scale/offset conversion — the bugs there are subtle and scientific, so always defer to the established library; (b) generic plumbing (discovery helpers, small utilities) *may* be replaced when a dependency is provably a bad trade — too slow on the hot path, a heavy transitive dependency for a sliver of use, etc. Justify any such reimplementation in the PR description with the concrete reason.
 2. **All external endpoint URLs go in `data/endpoints.py`.** No URL literals anywhere else in `src/`. Endpoints move (QuickMap changed domains); one module keeps that survivable.
-3. **Quantitative vs rendered is a hard boundary.** The STAC/COG path returns physical values and is the only path benchmarks may use. The WMS/WMTS tile path returns rendered 8-bit imagery and must be labeled as such in APIs and docs. Never mix them silently.
-4. **Cache is disposable, benchmarks are frozen.** Nothing in the cache layer may be load-bearing for reproducibility. Frozen benchmark data is pinned by STAC item ID and checksum in `moon/checksums.py` and hosted externally (Hugging Face / Zenodo), never committed to the repo.
+3. **Quantitative vs rendered is a hard boundary.** The STAC/COG path returns physical values and is the only path for quantitative or ML use. The WMS/WMTS tile path returns rendered 8-bit imagery and must be labeled as such in APIs and docs. Never mix them silently.
+4. **Cache is disposable.** Nothing in the cache layer may be load-bearing for correctness or reproducibility. Everything fetched on demand must be re-fetchable from the archive and safe to delete; never commit fetched data to the repo.
 5. **Be polite to archive servers.** Default concurrency is low, retries use exponential backoff, and any code path that could issue many requests must go through the rate-limited session in `data/stac.py` / `data/tiles.py`. Never write a loop that hammers NASA or USGS servers.
 6. **Body-namespaced layout.** Moon-specific code lives under `moon/`. Body-agnostic code (grid math, COG reads, caching) lives under `data/`. Adding Mars must be a new sibling module, not edits scattered through existing files.
 7. **Samples are dicts with a fixed contract.** `"image"` is (C, H, W) float32 (physical values, channel i = `layers[i]`), `"mask"` is (C, H, W) bool validity, plus `"layers"`, `"bbox"`, `"crs"`, and `"resolution"` provenance keys. Datasets that deviate must document it. Samples must collate under the default `DataLoader` collation.
@@ -65,6 +58,22 @@ tests/
 - No print statements in library code; use the `astrofetch` logger.
 - Docstrings in NumPy style. Keep examples copy-pasteable.
 
+## General engineering rules
+
+Widely-adopted defaults that keep the codebase consistent. When in doubt, match the surrounding code.
+
+- **Formatting is automated, never manual.** `ruff format` is the single source of truth for layout, quotes, and line length (config in pyproject.toml). Do not hand-align or fight the formatter; run it before every commit.
+- **Imports are sorted and grouped** (standard library, third-party, first-party), managed by ruff's isort rules. No unused imports, no wildcard (`from x import *`) imports.
+- **Naming follows PEP 8.** `snake_case` for functions and variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants, a leading underscore for private names. Names describe intent, not type (`bbox`, not `tuple4`).
+- **Type-hint every public function** and prefer typing internal ones too; keep `mypy src` clean.
+- **Small, single-responsibility functions.** Prefer early returns over deep nesting; if a function needs a paragraph to explain, split it.
+- **No magic numbers or strings.** Name them as module-level constants (see `CRS`, `BBox` in `moon/datasets.py`).
+- **Fail loud, handle errors explicitly.** No bare `except:`; catch the narrowest exception and re-raise with context. Never silently swallow errors or return `None` on failure without documenting it.
+- **DRY, but avoid premature abstraction.** Factor out real duplication; do not build generic machinery for a single caller.
+- **Delete dead code, don't comment it out.** Git remembers history; commented-out blocks and unused helpers are noise.
+- **Comments explain *why*, not *what*.** The code already says what it does; reserve comments for rationale, gotchas, and references.
+- **Tests are first-class.** Change behavior, change or add a test in the same PR; never leave a failing or skipped test without an explanation.
+
 ## Domain notes agents should know
 
 - Coordinates are IAU 2015 Moon (ocentric, longitude 0 to 360 or -180 to 180 must be normalized at the API boundary; internal convention is -180 to 180).
@@ -74,15 +83,15 @@ tests/
 
 ## What NOT to do
 
-- Do not add dependencies casually. Core deps are: torch, rasterio, pystac-client, numpy, pdr, planetarypy. Anything else needs a justification in the PR description.
-- Do not commit data files, fetched tiles, model weights, or notebooks with executed output containing large images.
+- Do not add dependencies casually. Core deps are: torch, rasterio, pystac-client, numpy. Anything else needs a justification in the PR description.
+- Do not commit data files, fetched tiles, or notebooks with executed output containing large images.
 - Do not target QuickMap's internal tile URLs; they are not a public API. Use USGS WMS or Moon Trek WMTS via `data/endpoints.py`.
-- Do not "fix" scientific constants, projection parameters, or checksums without a source; cite the reference in the commit message.
+- Do not "fix" scientific constants or projection parameters without a source; cite the reference in the commit message.
 - Do not weaken the mocked-network rule in unit tests to make something pass.
 
 ## Roadmap
 
-Check the current phase before proposing work; for example, do not build benchmark infrastructure while Phase 1 (STAC sampler MVP) is incomplete. Everything is a thin layer above existing archive tooling, never a mirror of any archive.
+Check the current phase before proposing work; for example, do not build Phase 2 datasets and transforms while Phase 1 (STAC sampler MVP) is incomplete. Everything is a thin layer above existing archive tooling, never a mirror of any archive.
 
 **Current phase: Phase 0 (scaffolding) — the per-instrument API surface is real and stable; the data path returns synthetic placeholder tensors until the Phase 1 STAC sampler lands.**
 
@@ -125,43 +134,28 @@ Exit criteria: the quickstart notebook fetches a Reiner Gamma patch with two lay
 - `astrofetch.moon.datasets`: random-bbox sampling already ships inside the instrument datasets (Phase 0); add `GridTileDataset` (deterministic tiling of an ROI) over the same `read(bbox)` interface, plus region-list sampling for the random path.
 - Samplers that respect spatial autocorrelation for train/val/test splits (block splitting, not random pixels).
 - Transforms: per-channel normalization stats, nodata masking, polar/equatorial projection handling made explicit.
-- Secondary access modes behind the same interface: WMS/WMTS rendered mode (clearly labeled non-quantitative) and an ODE REST granule mode stub for later full-fidelity work.
+- Secondary access mode behind the same interface: WMS/WMTS rendered mode, clearly labeled non-quantitative.
 
 Exit criteria: `DataLoader` trains a toy model on random lunar patches without custom user code.
 
-### Phase 3: Pretrained weights (1 to 2 weekends, leverages existing thesis assets)
-
-- `astrofetch.models`: multimodal MAE encoder definition matching the thesis architecture, plus fine-tuning heads.
-- `astrofetch.models.weights`: registry pattern, `af.models.load_pretrained("lunar-mae-base")`, weights hosted on Hugging Face Hub.
-- Model card documenting training data (with STAC provenance), input channels, and known limitations.
-
-Exit criteria: a user can load the pretrained encoder and extract features from a Phase 1 patch in under ten lines.
-
-### Phase 4: First frozen benchmark (2 to 3 weekends)
-
-- Pick one task with clear scientific value, for example swirl segmentation or crater detection on a defined region set.
-- Freeze: exact STAC item IDs, windows, checksums, and numeric arrays (not rendered tiles). Host the frozen set on Hugging Face, mint a Zenodo DOI at release.
-- Ship the evaluation harness: fixed metric, fixed splits, a baseline result from the Phase 3 encoder.
-
-Exit criteria: a third party can reproduce the baseline number from a fresh clone.
-
-### Phase 5: Release and community (ongoing)
+### Phase 3: Release and community (ongoing)
 
 - v0.1.0 to PyPI, announcement on OpenPlanetary forum and relevant mailing lists.
 - Apply for planetarypy affiliated package status.
-- Short JOSS paper or arXiv preprint describing the library and benchmark.
+- Short JOSS paper or arXiv preprint describing the library.
 - Issue templates and a CONTRIBUTING.md that explicitly invites new body modules (Mars first) and new dataset classes.
 
 ### Deliberate non-goals for v0.x
 
 - No mirroring or rehosting of raw PDS archives.
-- No support for every PDS product type; only what the sampler and datasets need.
+- No PDS granule / full-fidelity product access in v0.x; the STAC/COG path is the only quantitative source.
+- No pretrained models or frozen benchmarks; AstroFetch delivers ML-ready data, you bring the model.
 - No GUI or web viewer; QuickMap and Trek exist.
 - No Earth support; TorchGeo owns that space.
 
 ### Risks and mitigations
 
 - Endpoint drift (services move, as QuickMap's domain change showed): keep all endpoint URLs in one config module, cover them with the live test suite, and document last-verified dates.
-- M3 data quality issues: defer M3 dataset class until after v0.1 unless the swirls benchmark strictly requires it; budget preprocessing time if it does.
+- M3 data quality issues: defer the M3 dataset class until after v0.1 unless a user strictly needs it; budget preprocessing time if so.
 - Server load courtesy: default to conservative request concurrency, exponential backoff, and a bulk prefetch helper so training never hammers archive servers with random access.
 - Solo-maintainer bus factor: keep scope small, tests honest, and architecture boring enough that contributors can navigate it without you.

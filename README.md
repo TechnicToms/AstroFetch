@@ -73,13 +73,13 @@ MOON.probes["lro"].instruments["lroc_wac"].dataset  # <class 'astrofetch.moon.da
 - **One dataset class per instrument.** `KaguyaTC`, `LROCWAC`, … (the TorchGeo pattern);
   cross-instrument stacks are explicit compositions via `&` (`IntersectionDataset`).
   Probes and bodies are catalog metadata, never dataset boundaries.
-- **Wrap, do not reimplement.** `pdr` reads PDS products, `planetarypy` finds and fetches
-  them, `pystac-client` queries STAC, `rasterio` reads COGs. AstroFetch composes these.
+- **Wrap, do not reimplement.** `pystac-client` queries STAC, `rasterio` reads and windows
+  COGs. AstroFetch composes these rather than re-deriving archive tooling.
 - **STAC + COGs are the primary source.** Windowed HTTP range reads give real physical
   values in their existing map projection. Rendered tile services are a visualization
   convenience only, never the quantitative path.
-- **Cache is throwaway, benchmarks are frozen.** On-demand data is reproducible and
-  disposable; only checksummed numeric benchmark artifacts are permanent.
+- **Cache is throwaway.** On-demand data is reproducible and disposable; nothing fetched
+  is load-bearing or rehosted.
 - **Body-namespaced from day one.** The Moon ships first; adding Mars is a new module,
   not a redesign.
 
@@ -90,9 +90,7 @@ MOON.probes["lro"].instruments["lroc_wac"].dataset  # <class 'astrofetch.moon.da
 | 0 | Scaffolding — package, CI, docs, target API | In progress |
 | 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | Planned |
 | 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms | Planned |
-| 3 | Pretrained weights — multimodal MAE encoder and fine-tuning heads | Planned |
-| 4 | First frozen benchmark — checksummed, DOI-minted, reproducible | Planned |
-| 5 | Release and community — PyPI, planetarypy affiliation, paper | Planned |
+| 3 | Release and community — PyPI, planetarypy affiliation, paper | Planned |
 
 ## Development
 
