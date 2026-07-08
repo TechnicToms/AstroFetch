@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use AstroFetch in your research, please cite it as below."
+title: AstroFetch
+abstract: >-
+  PyTorch-friendly, ML-ready access to planetary science data, starting with
+  the Moon. Request a bounding box, receive a coregistered multichannel tensor.
+type: software
+authors:
+  - family-names: Sander
+    given-names: Tom
+license: Apache-2.0
+version: 0.1.0
+date-released: "2026-07-08"
+repository-code: "https://github.com/TechnicToms/AstroFetch"
+url: "https://github.com/TechnicToms/AstroFetch"
+keywords:
+  - machine-learning
+  - pytorch
+  - planetary-science
+  - remote-sensing
+  - moon
+  - stac

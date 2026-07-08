@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from astrofetch.moon.datasets import CRS, InstrumentDataset, KaguyaTC, LROCWAC
+from astrofetch.moon.datasets import CRS, LROCWAC, InstrumentDataset, KaguyaTC
 
 
 @dataclass(frozen=True)
