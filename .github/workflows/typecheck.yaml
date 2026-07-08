@@ -26,4 +26,8 @@ jobs:
         run: uv sync
 
       - name: Typecheck
-        run: uv run ty check
+        run: |
+          echo '## Ty Type Check' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run ty check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

@@ -26,7 +26,15 @@ jobs:
         run: uv sync
 
       - name: Ruff check
-        run: uv run ruff check
+        run: |
+          echo '## Ruff Lint' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run ruff check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ruff format check
-        run: uv run ruff format --check
+        run: |
+          echo '## Ruff Format' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run ruff format --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
