@@ -37,11 +37,11 @@ tests/
 
 ## Dev environment and commands
 
-- Python 3.10+, src layout, editable install: `pip install -e ".[dev]"`
-- Lint: `ruff check src tests` and `ruff format`
-- Types: `mypy src` (config in pyproject.toml; keep new code typed)
-- Tests: `pytest tests/unit` (CI default). Live endpoint tests: `pytest tests/live -m live` (never run these in CI or in loops; they hit real government servers).
-- Docs: `mkdocs serve`
+- Python 3.10+, src layout, uv-managed: `uv sync` installs the package plus the `dev` group (or `pip install -e .` for the package alone).
+- Lint: `uv run ruff check` and `uv run ruff format`
+- Types: `uv run mypy src` (config in pyproject.toml; keep new code typed)
+- Tests: `uv run pytest` (unit only; the `live` marker is deselected by default). Live endpoint tests: `uv run pytest tests/live -m live` (never run these in CI or in loops; they hit real government servers).
+- Docs: `uv run --group docs mkdocs serve`
 
 ## Testing rules for agents
 

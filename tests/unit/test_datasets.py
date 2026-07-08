@@ -37,7 +37,7 @@ def test_seed_is_reproducible() -> None:
     kwargs = dict(products=["mosaic"], patch_size=16, length=2, seed=42)
     first = [s["image"] for s in af.LROCWAC(**kwargs)]
     second = [s["image"] for s in af.LROCWAC(**kwargs)]
-    for a, b in zip(first, second):
+    for a, b in zip(first, second, strict=True):
         assert torch.equal(a, b)
 
 

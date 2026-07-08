@@ -1,10 +1,10 @@
 """Lunar data access: instrument datasets, layer registry, discovery catalog."""
 
 from astrofetch.moon.datasets import (
+    LROCWAC,
     InstrumentDataset,
     IntersectionDataset,
     KaguyaTC,
-    LROCWAC,
 )
 from astrofetch.moon.layers import LAYERS, MOON, Body, Instrument, LayerSpec, Probe
 

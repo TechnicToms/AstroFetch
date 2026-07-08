@@ -7,16 +7,33 @@ authors = [
     { name = "Tom Sander", email = "tom.sander@tu-dortmund.de" }
 ]
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
 dependencies = [
     "numpy>=1.24",
     "torch>=2.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/TechnicToms/AstroFetch"
+Repository = "https://github.com/TechnicToms/AstroFetch"
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
     "ruff>=0.4",
+    "mypy>=1.8",
+]
+docs = [
+    "mkdocs-material>=9.5",
 ]
 
 [build-system]
@@ -27,5 +44,28 @@ build-backend = "uv_build"
 line-length = 100
 src = ["src"]
 
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+files = ["src"]
+python_version = "3.10"
+# Lenient at first (Phase 0); tighten toward strict as the codebase grows.
+ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+
+# numpy/torch ship inline stubs that use syntax newer than our 3.10 target;
+# treat them as untyped rather than parsing their stubs under python_version 3.10.
+[[tool.mypy.overrides]]
+module = ["numpy.*", "torch.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not live'"
+markers = [
+    "live: hits real network endpoints; deselected by default (run with 'pytest tests/live -m live')",
+]

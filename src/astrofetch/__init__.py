@@ -6,7 +6,7 @@ archive tooling (STAC, COGs), never a mirror.
 """
 
 from astrofetch import moon
-from astrofetch.moon import MOON, IntersectionDataset, KaguyaTC, LROCWAC
+from astrofetch.moon import LROCWAC, MOON, IntersectionDataset, KaguyaTC
 
 __version__ = "0.1.0"
 
