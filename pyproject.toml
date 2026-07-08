@@ -48,6 +48,11 @@ src = ["src"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.format]
+preview = true
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-m 'not live'"

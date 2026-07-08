@@ -39,8 +39,8 @@ moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC
 )
 
 for sample in moondata:
-    sample["image"]   # torch.Tensor (C, H, W), one channel per layer
-    sample["mask"]    # torch.BoolTensor (C, H, W), validity (nodata gaps)
+    sample["image"]  # torch.Tensor (C, H, W), one channel per layer
+    sample["mask"]  # torch.BoolTensor (C, H, W), validity (nodata gaps)
     sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
 ```
 
