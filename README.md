@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/astrofetch-logo.jpg" alt="AstroFetch — Planetary Datasets for PyTorch" width="640">
+</p>
+
 # AstroFetch
 
 PyTorch-friendly, ML-ready access to planetary science data, starting with the Moon.
