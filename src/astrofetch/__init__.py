@@ -6,8 +6,15 @@ archive tooling (STAC, COGs), never a mirror.
 """
 
 from astrofetch import moon
-from astrofetch.moon import LROCWAC, MOON, IntersectionDataset, KaguyaTC
+from astrofetch.moon import MOON, IntersectionDataset, KaguyaTC, KaguyaTCImagery
 
 __version__ = "0.1.0"
 
-__all__ = ["MOON", "IntersectionDataset", "KaguyaTC", "LROCWAC", "moon", "__version__"]
+__all__ = [
+    "MOON",
+    "IntersectionDataset",
+    "KaguyaTC",
+    "KaguyaTCImagery",
+    "moon",
+    "__version__",
+]

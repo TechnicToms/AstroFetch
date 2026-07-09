@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import numpy as np
 import rasterio
-from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.errors import RasterioIOError
 from rasterio.vrt import WarpedVRT
@@ -49,7 +48,6 @@ def read_window(
     Raises:
         EndpointError: the COG could not be opened or read.
     """
-    dst_crs = CRS.from_string(grid.crs)
     try:
         with rasterio.open(href) as src:
             nodata = src.nodata
@@ -57,7 +55,7 @@ def read_window(
             offset = float(src.offsets[band - 1])
             with WarpedVRT(
                 src,
-                crs=dst_crs,
+                crs=grid.crs,
                 transform=grid.transform,
                 width=grid.width,
                 height=grid.height,

@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import rasterio
+from rasterio.enums import Resampling
 from rasterio.transform import from_bounds
 
 from astrofetch.data.grid import GEOGRAPHIC_CRS, TargetGrid
@@ -64,7 +65,7 @@ def test_applies_scale_and_offset(tmp_path: Path) -> None:
     )
     grid = TargetGrid(bbox=(0.0, 0.0, 8.0, 8.0), width=8, height=8)
 
-    image, _ = read_window(href, grid, resampling=rasterio.enums.Resampling.nearest)
+    image, _ = read_window(href, grid, resampling=Resampling.nearest)
 
     assert image == pytest.approx(100 * 0.013 + 2.0)
 
@@ -75,7 +76,7 @@ def test_nodata_becomes_invalid_mask(tmp_path: Path) -> None:
     href = _write_geotiff(tmp_path / "gappy.tif", src, (0.0, 0.0, 8.0, 8.0), nodata=-9999.0)
     grid = TargetGrid(bbox=(0.0, 0.0, 8.0, 8.0), width=8, height=8)
 
-    image, mask = read_window(href, grid, resampling=rasterio.enums.Resampling.nearest)
+    image, mask = read_window(href, grid, resampling=Resampling.nearest)
 
     assert not mask[:, :4].any()
     assert mask[:, 4:].all()
@@ -89,7 +90,7 @@ def test_area_outside_source_is_invalid(tmp_path: Path) -> None:
     # Grid extends east of the source coverage.
     grid = TargetGrid(bbox=(0.0, 0.0, 8.0, 4.0), width=16, height=8)
 
-    _, mask = read_window(href, grid, resampling=rasterio.enums.Resampling.nearest)
+    _, mask = read_window(href, grid, resampling=Resampling.nearest)
 
     assert mask[:, :8].all()
     assert not mask[:, 8:].any()
