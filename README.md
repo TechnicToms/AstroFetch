@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/astrofetch-logo.jpg" alt="AstroFetch — Planetary Datasets for PyTorch" width="640">
+</p>
+
 # AstroFetch
 
 PyTorch-friendly, ML-ready access to planetary science data, starting with the Moon.
@@ -14,9 +18,9 @@ rehosted, everything is fetched on demand and cached. It is, roughly, what
 [TorchGeo](https://github.com/microsoft/torchgeo) is for Earth observation, pointed at
 the Moon (and Mars next).
 
-> **Status: Phase 0 scaffolding.** The API surface is real and stable; the data path
-> currently returns synthetic placeholder tensors until the STAC sampler lands in Phase 1.
-> See the [roadmap](#roadmap).
+> **Status: Phase 1 (STAC sampler).** The data path is real: a request fetches the
+> Cloud Optimized GeoTIFFs covering the window from the USGS ARD catalog, reprojects
+> them onto a common grid, and returns physical values. See the [roadmap](#roadmap).
 
 ## Install
 
@@ -32,16 +36,26 @@ channels over the overlapping region:
 ```python
 import astrofetch as af
 
-bbox = (-60.0, 5.0, -55.0, 10.0)  # west, south, east, north (degrees)
+bbox = (-26.3, -50.6, -25.5, -49.7)  # west, south, east, north (degrees)
 
-moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC(
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.KaguyaTCImagery(
     bbox=bbox, resolution=100
 )
 
 for sample in moondata:
     sample["image"]  # torch.Tensor (C, H, W), one channel per layer
     sample["mask"]  # torch.BoolTensor (C, H, W), validity (nodata gaps)
-    sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
+    sample["layers"]  # ["kaguya_tc_dtm", "kaguya_tc_image"], plus bbox/crs/resolution
+```
+
+Each dataset is **map-style**: index it (`moondata[0]`), take its `len()`, and
+shuffle or split it like any `torch` dataset. `patch_size` sets the output size —
+images are `(C, patch_size, patch_size)`, default 256 — and `length` sets how
+many random patches make up one epoch:
+
+```python
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, patch_size=128, length=500, seed=0)
+moondata[0]["image"].shape  # torch.Size([1, 128, 128]); moondata[i] is reproducible
 ```
 
 It plugs directly into a PyTorch training loop — samples are plain dicts, so
@@ -65,7 +79,7 @@ for probe in MOON.probes.values():
     for instrument in probe.instruments.values():
         print(probe.name, "/", instrument.name, "->", sorted(instrument.products))
 
-MOON.probes["lro"].instruments["lroc_wac"].dataset  # <class 'astrofetch.moon.datasets.LROCWAC'>
+MOON.probes["kaguya"].instruments["tc_imagery"].dataset  # KaguyaTCImagery
 ```
 
 ## Design principles
@@ -87,9 +101,9 @@ MOON.probes["lro"].instruments["lroc_wac"].dataset  # <class 'astrofetch.moon.da
 
 | Phase | Deliverable | Status |
 |:-----:|:------------|:------:|
-| 0 | Scaffolding — package, CI, docs, target API | In progress |
-| 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | Planned |
-| 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms | Planned |
+| 0 | Scaffolding — package, CI, docs, target API | Done |
+| 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | In progress |
+| 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms, LRO WAC | Planned |
 | 3 | Release and community — PyPI, planetarypy affiliation, paper | Planned |
 
 ## Development

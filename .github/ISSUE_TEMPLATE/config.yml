@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and discussion
+    url: https://github.com/TechnicToms/AstroFetch/discussions
+    about: Ask a question or discuss an idea before filing an issue.
+  - name: Contributing guide
+    url: https://github.com/TechnicToms/AstroFetch/blob/main/CONTRIBUTING.md
+    about: How to set up, test, and open a pull request.

@@ -1,0 +1,62 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in what you can —
+        a minimal reproducible example is the single most helpful thing.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: I called KaguyaTC(...) and expected ..., but got ...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproducible example
+      description: The smallest snippet that triggers the bug. It will be rendered as Python.
+      render: python
+      placeholder: |
+        import astrofetch as af
+
+        moondata = af.KaguyaTC(products=["dtm"], bbox=(-26.3, -50.6, -25.5, -49.7))
+        next(iter(moondata))
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback or error output
+      description: Paste the full traceback if there is one. It will be rendered as a code block.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: AstroFetch version
+      description: "Output of: python -c \"import astrofetch; print(astrofetch.__version__)\""
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Python and OS
+      description: Python version and operating system.
+      placeholder: "Python 3.12 on macOS 15"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: The example above reproduces the problem on a clean environment.
+          required: false

@@ -19,7 +19,7 @@ src/astrofetch/
     tiles.py          # secondary rendered mode: USGS WMS, Moon Trek WMTS
   moon/
     layers.py         # layer registry (name -> STAC collection + read config) + Body/Probe/Instrument catalog (MOON)
-    datasets.py       # instrument dataset classes (InstrumentDataset, KaguyaTC, LROCWAC) + IntersectionDataset
+    datasets.py       # instrument dataset classes (InstrumentDataset, KaguyaTC, KaguyaTCImagery) + IntersectionDataset
 tests/
   unit/               # network fully mocked, runs in CI
   live/               # hits real endpoints, manual trigger only
@@ -39,7 +39,7 @@ tests/
 
 - Python 3.10+, src layout, uv-managed: `uv sync` installs the package plus the `dev` group (or `pip install -e .` for the package alone).
 - Lint: `uv run ruff check` and `uv run ruff format`
-- Types: `uv run mypy src` (config in pyproject.toml; keep new code typed)
+- Types: `uv run ty check` (config in pyproject.toml; keep new code typed)
 - Tests: `uv run pytest` (unit only; the `live` marker is deselected by default). Live endpoint tests: `uv run pytest tests/live -m live` (never run these in CI or in loops; they hit real government servers).
 - Docs: `uv run --group docs mkdocs serve`
 
@@ -93,12 +93,12 @@ Widely-adopted defaults that keep the codebase consistent. When in doubt, match 
 
 Check the current phase before proposing work; for example, do not build Phase 2 datasets and transforms while Phase 1 (STAC sampler MVP) is incomplete. Everything is a thin layer above existing archive tooling, never a mirror of any archive.
 
-**Current phase: Phase 0 (scaffolding) — the per-instrument API surface is real and stable; the data path returns synthetic placeholder tensors until the Phase 1 STAC sampler lands.**
+**Current phase: Phase 1 (STAC sampler). Phase 0 scaffolding is complete. `InstrumentDataset.read` now fetches the real COGs covering a window from the USGS ARD catalog, reprojects them onto a common geographic grid, applies scale/offset, mosaics overlapping items, and caches the result — no more synthetic tensors.**
 
 ### Phase 0: Scaffolding (weekend 1)
 
 - Repo setup: pyproject.toml (hatchling or setuptools), src layout, MIT or Apache-2.0 license, CITATION.cff.
-- CI: GitHub Actions running ruff, mypy (lenient at first), pytest on 3.10 through 3.12.
+- CI: GitHub Actions running ruff, ruff format, `ty` type checking, and pytest on 3.10 through 3.14.
 - Testing policy established early: unit tests mock all network calls; a separate, manually triggered "live" test suite hits real endpoints.
 - Placeholder docs (mkdocs-material) and a README with the one-line pitch and the target API sketch.
 
@@ -111,23 +111,23 @@ The single most important deliverable. Everything else builds on it.
 - `astrofetch.data.stac`: query the USGS ARD catalog root with pystac-client, filter by collection and bbox.
 - `astrofetch.data.raster`: windowed COG reads via rasterio, honoring scale/offset to return physical values, resampling to a requested resolution.
 - `astrofetch.data.grid`: define a common target grid (equirectangular, IAU 2015 Moon), reproject and stack layers into a (C, H, W) float tensor with a per-channel metadata record.
-- The sampler plugs into `InstrumentDataset.read(bbox)`, replacing the Phase 0 synthetic placeholder. Public API target (already the shipped Phase 0 surface):
+- The sampler plugs into `InstrumentDataset.read(bbox)`, replacing the Phase 0 synthetic placeholder. Shipped public API:
 
 ```python
 import astrofetch as af
-bbox = (-60.0, 5.0, -55.0, 10.0)
-moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC(
+bbox = (-26.3, -50.6, -25.5, -49.7)  # a Kaguya TC USGS DTM footprint
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.KaguyaTCImagery(
     bbox=bbox, resolution=100
 )
 sample = next(iter(moondata))
 sample["image"]   # torch.Tensor (C, H, W), physical values
 sample["mask"]    # torch.BoolTensor (C, H, W), validity (nodata gaps)
-sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
+sample["layers"]  # ["kaguya_tc_dtm", "kaguya_tc_image"], plus bbox/crs/resolution
 ```
 
 - Local disk cache keyed by (collection, item, window, resolution), transparent and clearable.
 
-Exit criteria: the quickstart notebook fetches a Reiner Gamma patch with two layers and plots it, end to end, on a clean machine.
+Exit criteria: `KaguyaTC(products=["dtm", "ortho"], bbox=...)` fetches a real, coregistered two-layer patch from the USGS ARD catalog on a clean machine (covered by `tests/live`). A plotting quickstart notebook is a nice-to-have follow-up.
 
 ### Phase 2: Datasets and transforms (2 to 3 weekends)
 
@@ -135,6 +135,7 @@ Exit criteria: the quickstart notebook fetches a Reiner Gamma patch with two lay
 - Samplers that respect spatial autocorrelation for train/val/test splits (block splitting, not random pixels).
 - Transforms: per-channel normalization stats, nodata masking, polar/equatorial projection handling made explicit.
 - Secondary access mode behind the same interface: WMS/WMTS rendered mode, clearly labeled non-quantitative.
+- LRO WAC global mosaic: the USGS ARD STAC catalog has no LRO WAC collection, so add it here from a non-STAC source (a public COG mosaic or WMS/WMTS), behind the same instrument-dataset interface as a new `LROCWAC` class.
 
 Exit criteria: `DataLoader` trains a toy model on random lunar patches without custom user code.
 

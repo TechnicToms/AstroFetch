@@ -3,10 +3,10 @@
 PyTorch-friendly, ML-ready access to planetary science data, starting with the
 Moon. Request a bounding box, receive a coregistered multichannel tensor.
 
-!!! warning "Phase 0 scaffolding"
-    The API surface is real and stable; the data path currently returns
-    synthetic placeholder tensors until the STAC sampler lands in Phase 1.
-    See the [roadmap](roadmap.md).
+!!! info "Phase 1 (STAC sampler)"
+    The data path is real: a request fetches the Cloud Optimized GeoTIFFs
+    covering the window from the USGS ARD catalog, reprojects them onto a
+    common grid, and returns physical values. See the [roadmap](roadmap.md).
 
 ## Install
 
@@ -22,16 +22,16 @@ channels over the overlapping region:
 ```python
 import astrofetch as af
 
-bbox = (-60.0, 5.0, -55.0, 10.0)  # west, south, east, north (degrees)
+bbox = (-26.3, -50.6, -25.5, -49.7)  # west, south, east, north (degrees)
 
-moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.LROCWAC(
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, resolution=100) & af.KaguyaTCImagery(
     bbox=bbox, resolution=100
 )
 
 for sample in moondata:
     sample["image"]   # torch.Tensor (C, H, W), one channel per layer
     sample["mask"]    # torch.BoolTensor (C, H, W), validity (nodata gaps)
-    sample["layers"]  # ["kaguya_tc_dtm", "lroc_wac"], plus bbox/crs/resolution
+    sample["layers"]  # ["kaguya_tc_dtm", "kaguya_tc_image"], plus bbox/crs/resolution
 ```
 
 Samples are plain dicts, so a `DataLoader` collates them with no custom code:

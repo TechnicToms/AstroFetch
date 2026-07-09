@@ -5,6 +5,8 @@ repo_name: TechnicToms/AstroFetch
 
 theme:
   name: material
+  logo: assets/astro-fetch-icon.jpg
+  favicon: assets/astro-fetch-icon.jpg
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default

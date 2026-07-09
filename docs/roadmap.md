@@ -6,11 +6,11 @@ this page is the short version.
 
 | Phase | Deliverable | Status |
 |:-----:|:------------|:------:|
-| 0 | Scaffolding — package, CI, docs, target API | In progress |
-| 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | Planned |
-| 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms | Planned |
+| 0 | Scaffolding — package, CI, docs, target API | Done |
+| 1 | STAC sampler MVP — bbox to coregistered `(C, H, W)` tensor | In progress |
+| 2 | Datasets and transforms — grid-tile dataset, spatial splits, transforms, LRO WAC | Planned |
 | 3 | Release and community — PyPI, planetarypy affiliation, paper | Planned |
 
-**Current phase: Phase 0.** The per-instrument API surface is real and stable;
-the data path returns synthetic placeholder tensors until the Phase 1 STAC
-sampler replaces `InstrumentDataset.read(bbox)`.
+**Current phase: Phase 1.** `InstrumentDataset.read(bbox)` now fetches real COGs
+from the USGS ARD catalog, reprojects them onto a common geographic grid,
+applies scale/offset, mosaics overlapping items, and caches the result.

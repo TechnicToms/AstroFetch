@@ -1,0 +1,71 @@
+name: New dataset or body
+description: Propose a new instrument dataset or a new planetary body module.
+title: "[Data]: "
+labels: ["dataset"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New instrument datasets and body modules are exactly the contributions
+        we want. AstroFetch's quantitative path needs Cloud Optimized GeoTIFFs
+        (COGs) discoverable via a STAC API. Rendered-only WMS/WMTS layers can be
+        added as a clearly-labeled non-quantitative source. See the "Adding a
+        new instrument dataset" section of
+        [CONTRIBUTING.md](https://github.com/TechnicToms/AstroFetch/blob/main/CONTRIBUTING.md).
+  - type: input
+    id: body
+    attributes:
+      label: Planetary body
+      placeholder: "Moon / Mars / ..."
+    validations:
+      required: true
+  - type: input
+    id: instrument
+    attributes:
+      label: Probe and instrument
+      placeholder: "LRO / LROC WAC"
+    validations:
+      required: true
+  - type: dropdown
+    id: source-type
+    attributes:
+      label: Data source type
+      options:
+        - STAC API with COG assets (quantitative — preferred)
+        - Standalone COG / mosaic (no STAC)
+        - WMS / WMTS rendered tiles (non-quantitative)
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Where does the data live?
+      description: STAC catalog root and collection id, or the COG / service URL(s).
+      placeholder: |
+        STAC root: https://stac.astrogeology.usgs.gov/api/
+        Collection: kaguya_terrain_camera_usgs_dtms
+        COG asset key(s): dtm, orthoimage
+    validations:
+      required: true
+  - type: textarea
+    id: products
+    attributes:
+      label: Products and units
+      description: Which products (bands/assets), their physical units, and any scale/offset or nodata quirks.
+      placeholder: "DTM (metres, nodata -32767); orthoimage (radiance, DN * scale)."
+  - type: input
+    id: projection
+    attributes:
+      label: Projection / CRS
+      description: Native CRS of the rasters, if known (equirectangular, polar stereographic, IAU code).
+      placeholder: "IAU_2015:30110 (equirectangular); polar items use stereographic"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I confirmed the data is openly accessible (no login / paywall).
+          required: true
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
