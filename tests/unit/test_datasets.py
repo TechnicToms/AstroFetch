@@ -80,6 +80,34 @@ def test_read_queries_stac_by_collection_and_asset(monkeypatch: pytest.MonkeyPat
     assert calls == [("kaguya_terrain_camera_usgs_dtms", "orthoimage")]
 
 
+def test_supports_indexing() -> None:
+    moondata = af.KaguyaTC(products=["dtm"], patch_size=8, length=5, seed=0)
+    sample = moondata[0]
+    assert set(sample) == SAMPLE_KEYS
+    assert sample["image"].shape == (1, 8, 8)
+    # Indexing is deterministic and negative indices work.
+    assert torch.equal(moondata[0]["image"], moondata[0]["image"])
+    assert torch.equal(moondata[-1]["image"], moondata[4]["image"])
+
+
+def test_index_out_of_range_raises() -> None:
+    moondata = af.KaguyaTC(products=["dtm"], patch_size=8, length=3, seed=0)
+    with pytest.raises(IndexError):
+        moondata[3]
+
+
+def test_patch_size_sets_image_dimensions() -> None:
+    moondata = af.KaguyaTCImagery(patch_size=48, length=1, seed=0)
+    assert moondata[0]["image"].shape == (1, 48, 48)
+
+
+def test_shuffled_dataloader_covers_every_index() -> None:
+    moondata = af.KaguyaTC(products=["dtm"], patch_size=8, length=6, seed=0)
+    loader = DataLoader(moondata, batch_size=2, shuffle=True)
+    total = sum(batch["image"].shape[0] for batch in loader)
+    assert total == 6
+
+
 def test_seed_is_reproducible() -> None:
     def sampler() -> af.KaguyaTCImagery:
         return af.KaguyaTCImagery(products=["image"], patch_size=16, length=2, seed=42)

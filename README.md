@@ -44,6 +44,16 @@ for sample in moondata:
     sample["layers"]  # ["kaguya_tc_dtm", "kaguya_tc_image"], plus bbox/crs/resolution
 ```
 
+Each dataset is **map-style**: index it (`moondata[0]`), take its `len()`, and
+shuffle or split it like any `torch` dataset. `patch_size` sets the output size —
+images are `(C, patch_size, patch_size)`, default 256 — and `length` sets how
+many random patches make up one epoch:
+
+```python
+moondata = af.KaguyaTC(products=["dtm"], bbox=bbox, patch_size=128, length=500, seed=0)
+moondata[0]["image"].shape  # torch.Size([1, 128, 128]); moondata[i] is reproducible
+```
+
 It plugs directly into a PyTorch training loop — samples are plain dicts, so
 the default collation just works:
 

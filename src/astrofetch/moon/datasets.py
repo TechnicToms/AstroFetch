@@ -18,7 +18,7 @@ from typing import ClassVar, NamedTuple
 
 import numpy as np
 import torch
-from torch.utils.data import IterableDataset
+from torch.utils.data import Dataset
 
 from astrofetch.data import raster, stac
 from astrofetch.data.cache import WindowCache
@@ -38,11 +38,13 @@ class Product(NamedTuple):
     asset: str
 
 
-class _WindowedDataset(IterableDataset):
-    """Shared sampling loop: draw random windows, delegate to ``read``.
+class _WindowedDataset(Dataset[dict]):
+    """Map-style dataset: index ``i`` deterministically samples one window.
 
     Subclasses set ``bbox``, ``resolution``, ``patch_size``, ``length``,
-    ``seed``, and ``layers``, and implement ``read``.
+    ``seed``, and ``layers``, and implement ``read``. ``dataset[i]`` and
+    iteration both work, and because each index maps to a fixed window the
+    dataset supports ``DataLoader`` shuffling, samplers, and ``random_split``.
     """
 
     bbox: BBox
@@ -51,6 +53,7 @@ class _WindowedDataset(IterableDataset):
     length: int
     seed: int | None
     layers: list[str]
+    _cached_seed_base: int | None = None
 
     def read(self, bbox: BBox) -> dict:
         """Read one window as a sample dict.
@@ -61,12 +64,16 @@ class _WindowedDataset(IterableDataset):
         """
         raise NotImplementedError
 
+    def __getitem__(self, index: int) -> dict:
+        if index < 0:
+            index += self.length
+        if not 0 <= index < self.length:
+            raise IndexError(f"index out of range for length {self.length}")
+        return self.read(self._sample_bbox(index))
+
     def __iter__(self) -> Iterator[dict]:
-        generator = torch.Generator()
-        if self.seed is not None:
-            generator.manual_seed(self.seed)
-        for _ in range(self.length):
-            yield self.read(self._sample_bbox(generator))
+        for index in range(self.length):
+            yield self[index]
 
     def __len__(self) -> int:
         return self.length
@@ -74,7 +81,20 @@ class _WindowedDataset(IterableDataset):
     def __and__(self, other: _WindowedDataset) -> IntersectionDataset:
         return IntersectionDataset(self, other)
 
-    def _sample_bbox(self, generator: torch.Generator) -> BBox:
+    @property
+    def _seed_base(self) -> int:
+        # Fixed per instance: an explicit seed makes samples reproducible across
+        # instances; without one, each instance still gives a stable dataset[i].
+        if self._cached_seed_base is None:
+            if self.seed is not None:
+                self._cached_seed_base = self.seed
+            else:
+                self._cached_seed_base = int(torch.randint(0, 2**31 - 1, (1,)).item())
+        return self._cached_seed_base
+
+    def _sample_bbox(self, index: int) -> BBox:
+        generator = torch.Generator()
+        generator.manual_seed((self._seed_base * 1_000_003 + index) % (2**63 - 1))
         west, south, east, north = self.bbox
         span_lon, span_lat = east - west, north - south
         # Window ground size from patch_size * resolution, converted to degrees
@@ -89,14 +109,15 @@ class _WindowedDataset(IterableDataset):
 
 
 class InstrumentDataset(_WindowedDataset):
-    """Iterable dataset of patches from a single instrument.
+    """Map-style dataset of patches from a single instrument.
 
-    Samples random bounding boxes within ``bbox`` and yields sample dicts:
-    ``image`` is a (C, H, W) float tensor with one channel per requested
-    product (physical values), ``mask`` a same-shaped bool validity tensor
-    (orbital swaths do not cover everything), plus ``layers``/``bbox``/``crs``/
-    ``resolution`` provenance. Combine instruments with ``&`` to stack their
-    channels over the overlapping region.
+    Each index deterministically samples a bounding box within ``bbox`` and
+    returns a sample dict: ``image`` is a (C, H, W) float tensor with one
+    channel per requested product (physical values) where ``H = W =
+    patch_size``, ``mask`` a same-shaped bool validity tensor (orbital swaths
+    do not cover everything), plus ``layers``/``bbox``/``crs``/``resolution``
+    provenance. Combine instruments with ``&`` to stack their channels over the
+    overlapping region.
 
     Args:
         products: product names to stack, e.g. ``["dtm"]``; defaults to all
