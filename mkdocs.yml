@@ -26,6 +26,24 @@ theme:
 nav:
   - Home: index.md
   - Roadmap: roadmap.md
+  - API Reference:
+      - Instrument datasets: reference/datasets.md
+      - Catalog & registry: reference/catalog.md
+      - Data layer: reference/data.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            members_order: source
+            filters: ["!^_"]
 
 markdown_extensions:
   - admonition
