@@ -127,6 +127,7 @@ def query_products(
     pt: str,
     bbox: BBox,
     max_products: int = 20,
+    product_id: str | None = None,
     root: str = ODE_API_ROOT,
 ) -> list[ODEProduct]:
     """Search ODE for products of one instrument and product type in ``bbox``.
@@ -138,6 +139,14 @@ def query_products(
         bbox: (west, south, east, north) in degrees, -180 to 180.
         max_products: cap on products returned; bounds request volume and
             paging (fetched in pages of up to 100).
+        product_id: ODE ``productid`` wildcard filter (``*`` matches any
+            substring), e.g. ``"*wac_gld100*"``. Some product types mix many
+            unrelated products (rendered visualizations, per-orbit granules,
+            other parameters) under one ``pt``, so a bbox-only search can
+            bury the products actually wanted far past any reasonable
+            ``max_products`` cap; narrowing server-side with a product id
+            pattern is what keeps that search small and polite (rule 5)
+            instead of paging through everything.
         root: ODE API root; defaults to the configured endpoint.
 
     Returns:
@@ -176,6 +185,8 @@ def query_products(
             "limit": limit,
             "offset": offset,
         }
+        if product_id is not None:
+            params["productid"] = product_id
         try:
             response = _session().get(root, params=params, timeout=_TIMEOUT_S)
             response.raise_for_status()
@@ -232,6 +243,7 @@ def find_file_urls(
     bbox: BBox,
     max_products: int = 20,
     file_type: str | None = "Product",
+    product_id: str | None = None,
     root: str = ODE_API_ROOT,
 ) -> list[str]:
     """Return file URLs matching ``pattern`` across products in ``bbox``.
@@ -250,6 +262,8 @@ def find_file_urls(
         bbox: (west, south, east, north) in degrees, -180 to 180.
         max_products: cap on products searched.
         file_type: required ODE file role; ``None`` skips this filter.
+        product_id: ODE ``productid`` wildcard filter; see
+            :func:`query_products`.
         root: ODE API root; defaults to the configured endpoint.
 
     Returns:
@@ -258,7 +272,7 @@ def find_file_urls(
     Raises:
         EndpointError: the search failed or ODE reported an error.
     """
-    products = query_products(ihid, iid, pt, bbox, max_products, root)
+    products = query_products(ihid, iid, pt, bbox, max_products, product_id, root)
     hrefs: list[str] = []
     for product in products:
         hrefs.extend(match_files(product.files, pattern, file_type))

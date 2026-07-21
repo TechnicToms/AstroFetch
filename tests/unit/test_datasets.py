@@ -61,13 +61,20 @@ def _fake_find_file_urls(
     bbox: tuple,
     max_products: int = 20,
     file_type: str | None = "Product",
+    product_id: str | None = None,
     root: str | None = None,
 ) -> list[str]:
     return [f"{ihid}|{iid}|{pt}"]
 
 
 def _fake_query_products(
-    ihid: str, iid: str, pt: str, bbox: tuple, max_products: int = 20, root: str | None = None
+    ihid: str,
+    iid: str,
+    pt: str,
+    bbox: tuple,
+    max_products: int = 20,
+    product_id: str | None = None,
+    root: str | None = None,
 ) -> list:
     # No footprints by default: exercises the uniform-sampling fallback unless
     # a test overrides this to supply real footprints.
@@ -304,7 +311,17 @@ def test_ode_instrument_yields_sample_dicts() -> None:
 def test_ode_read_queries_ode_by_ihid_iid_pt(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str, str, str]] = []
 
-    def _spy(ihid, iid, pt, pattern, bbox, max_products=20, file_type="Product", root=None):
+    def _spy(
+        ihid,
+        iid,
+        pt,
+        pattern,
+        bbox,
+        max_products=20,
+        file_type="Product",
+        product_id=None,
+        root=None,
+    ):
         calls.append((ihid, iid, pt))
         return [f"{ihid}|{iid}|{pt}"]
 
@@ -326,7 +343,17 @@ def test_ode_asset_file_type_defaults_to_product() -> None:
 def test_ode_read_passes_asset_file_type(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[str] = []
 
-    def _spy(ihid, iid, pt, pattern, bbox, max_products=20, file_type="Product", root=None):
+    def _spy(
+        ihid,
+        iid,
+        pt,
+        pattern,
+        bbox,
+        max_products=20,
+        file_type="Product",
+        product_id=None,
+        root=None,
+    ):
         seen.append(file_type)
         return [f"{ihid}|{iid}|{pt}"]
 
@@ -529,3 +556,28 @@ def test_catalog_includes_minirf() -> None:
     assert spec.ihid == "LRO"
     assert spec.iid == "MRFLRO"
     assert spec.pt == "MOSDDR"
+
+
+def test_diviner_patterns_pin_the_latest_cumulative_date() -> None:
+    _assert_pattern_selects(
+        af.DivinerGDR.all_products["rock_abundance"],
+        "LRO/DLRE/GDR_L3",
+        "20160913n_128_img.lbl",
+    )
+    _assert_pattern_selects(
+        af.DivinerGDR.all_products["regolith_temp"],
+        "LRO/DLRE/GDR_L3",
+        "20160913n_128_img.lbl",
+    )
+
+
+def test_diviner_does_not_offer_bolometric_temperature() -> None:
+    assert "tbol" not in af.DivinerGDR.all_products
+    assert set(af.DivinerGDR.all_products) == {"rock_abundance", "regolith_temp"}
+
+
+def test_catalog_includes_diviner() -> None:
+    assert MOON.probes["lro"].instruments["diviner"].dataset is af.DivinerGDR
+    spec = LAYERS["lro_diviner_rock_abundance"]
+    assert spec.source == "ode"
+    assert spec.pt == "GDR_L3"

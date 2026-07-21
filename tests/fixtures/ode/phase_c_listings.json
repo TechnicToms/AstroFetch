@@ -7,5 +7,14 @@
     {"FileName": "GLOBAL_SC_128PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_sc_128ppd_simp_0c.lbl"},
     {"FileName": "GLOBAL_OC_128PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_oc_128ppd_simp_0c.lbl"},
     {"FileName": "GLOBAL_CPR_SIMP_0C_BR.PNG", "Type": "Browse", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/browse/global_cpr_simp_0c_br.png"}
+  ],
+  "LRO/DLRE/GDR_L3": [
+    {"FileName": "DGDR_RA_CLC_CYL_20160913N_128_IMG.IMG", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2016/cylindrical/img/dgdr_ra_clc_cyl_20160913n_128_img.img"},
+    {"FileName": "DGDR_RA_CLC_CYL_20160913N_128_IMG.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2016/cylindrical/img/dgdr_ra_clc_cyl_20160913n_128_img.lbl"},
+    {"FileName": "DGDR_RA_CLC_CYL_20160913N_128_IMG.XML", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2016/cylindrical/img/dgdr_ra_clc_cyl_20160913n_128_img.xml"},
+    {"FileName": "DGDR_RA_CLC_CYL_20090705N_128_IMG.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2009/cylindrical/img/dgdr_ra_clc_cyl_20090705n_128_img.lbl"},
+    {"FileName": "DGDR_ST_CLC_CYL_20160913N_128_IMG.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2016/cylindrical/img/dgdr_st_clc_cyl_20160913n_128_img.lbl"},
+    {"FileName": "DGDR_TBOL_CLC_CYL_20090705N_128_IMG.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gdr_l3/2009/cylindrical/img/dgdr_tbol_clc_cyl_20090705n_128_img.lbl"},
+    {"FileName": "DGDR_RA_CLC_CYL_20160913N_128_JPG.JPG", "Type": "Browse", "URL": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/browse/gdr_l3/2016/cylindrical/jpg/dgdr_ra_clc_cyl_20160913n_128_jpg.jpg"}
   ]
 }

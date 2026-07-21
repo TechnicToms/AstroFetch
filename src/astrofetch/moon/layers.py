@@ -20,6 +20,7 @@ from astrofetch.moon.datasets import (
     LOLA,
     LROCNACDTM,
     SLDEM2015,
+    DivinerGDR,
     KaguyaTC,
     KaguyaTCImagery,
     LROCWACMosaic,
@@ -73,6 +74,10 @@ class LayerSpec:
     file_type: str = ""
     """Required ODE file role for ``pattern`` to match against
     (``source == "ode"``); almost always ``"Product"``."""
+
+    product_id: str = ""
+    """ODE ``productid`` wildcard filter narrowing the search server-side
+    (``source == "ode"``); empty when the product type needs no narrowing."""
 
     href: str = ""
     """Fixed archive URL (``source == "mosaic"``)."""
@@ -133,6 +138,7 @@ def _spec(dataset: type[_ProductDataset], product: str) -> LayerSpec:
             pt=entry.pt,
             pattern=entry.pattern,
             file_type=entry.file_type,
+            product_id=entry.product_id or "",
         )
     if isinstance(entry, MosaicAsset):
         return LayerSpec(**common, source="mosaic", href=entry.href)
@@ -154,6 +160,8 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(MiniRF, "cpr"),
         _spec(MiniRF, "sc"),
         _spec(MiniRF, "oc"),
+        _spec(DivinerGDR, "rock_abundance"),
+        _spec(DivinerGDR, "regolith_temp"),
     )
 }
 
@@ -185,6 +193,7 @@ MOON = Body(
                 "lola": _instrument(LOLA),
                 "sldem2015": _instrument(SLDEM2015),
                 "minirf": _instrument(MiniRF),
+                "diviner": _instrument(DivinerGDR),
             },
             granules={
                 "nac_raw": LROCNACRaw,

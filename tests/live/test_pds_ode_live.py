@@ -114,6 +114,30 @@ def test_minirf_fetches_a_real_patch(tmp_path: Path) -> None:
 
 
 @pytest.mark.live
+def test_diviner_fetches_a_real_patch(tmp_path: Path) -> None:
+    """Diviner rock abundance: the latest cumulative global mosaic, detached
+    PDS3 label with correctly declared nodata. Rock abundance coverage is
+    real but incomplete even in the latest cumulative mosaic (insufficient
+    nighttime passes in some regions -- verified live 2026-07-21 that
+    (23, 18, 25, 20) is a genuine gap), so this uses a bbox confirmed to
+    have data rather than asserting coverage anywhere."""
+    moondata = af.DivinerGDR(
+        products=["rock_abundance"],
+        bbox=(60.0, 55.0, 62.0, 57.0),
+        resolution=1000.0,
+        patch_size=16,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 16, 16)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= 0.0).all()) and bool((valid <= 1.0).all())
+
+
+@pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
     dataset = af.LROCNACRaw(bbox=_APOLLO15_AREA, max_products=1, rows=slice(0, 64))

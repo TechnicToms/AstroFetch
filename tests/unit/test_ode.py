@@ -138,6 +138,27 @@ def test_longitude_converted_to_0_360(monkeypatch: pytest.MonkeyPatch) -> None:
     assert session.calls[0]["easternlon"] == pytest.approx(334.5)
 
 
+def test_product_id_filter_is_sent_only_when_given(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session([_EMPTY_BODY])
+    _patch_session(monkeypatch, session)
+    ode.query_products("LRO", "LROC", "SDNDTM", (0.0, 0.0, 1.0, 1.0))
+    assert "productid" not in session.calls[0]
+
+    session = _Session([_EMPTY_BODY])
+    _patch_session(monkeypatch, session)
+    ode.query_products("LRO", "LROC", "SDNDTM", (0.0, 0.0, 1.0, 1.0), product_id="*wac_gld100*")
+    assert session.calls[0]["productid"] == "*wac_gld100*"
+
+
+def test_find_file_urls_forwards_product_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session([_EMPTY_BODY])
+    _patch_session(monkeypatch, session)
+    ode.find_file_urls(
+        "LRO", "LROC", "SDNDTM", r".+", (0.0, 0.0, 1.0, 1.0), product_id="*wac_gld100*"
+    )
+    assert session.calls[0]["productid"] == "*wac_gld100*"
+
+
 def test_full_moon_bbox_does_not_collapse_to_zero_width(monkeypatch: pytest.MonkeyPatch) -> None:
     # A naive `lon % 360` on each bound independently sends (-180, 180) to
     # (180, 180): a zero-width query that would silently return nothing.

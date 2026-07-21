@@ -71,6 +71,12 @@ class ODEAsset(NamedTuple):
     """Required ODE file role for ``pattern`` to match against. Almost every
     product's actual data file is typed ``"Product"``; a few (e.g. ShadowCam
     DTM confidence maps) ship their data under ``"Referenced"`` instead."""
+    product_id: str | None = None
+    """ODE ``productid`` wildcard filter narrowing the bbox search
+    server-side, e.g. ``"*wac_gld100*"``. Needed whenever a product type
+    mixes the wanted product with many unrelated ones (other parameters,
+    rendered visualizations, per-orbit granules) that would otherwise
+    dominate the results within any reasonable ``max_products`` cap."""
 
 
 class MosaicAsset(NamedTuple):
@@ -361,7 +367,14 @@ class ODEInstrumentDataset(_ProductDataset):
     def _hrefs(self, spec: Product | ODEAsset | MosaicAsset, bbox: BBox) -> list[str]:
         assert isinstance(spec, ODEAsset)
         return ode.find_file_urls(
-            self.ihid, self.iid, spec.pt, spec.pattern, bbox, self.max_products, spec.file_type
+            self.ihid,
+            self.iid,
+            spec.pt,
+            spec.pattern,
+            bbox,
+            self.max_products,
+            spec.file_type,
+            spec.product_id,
         )
 
     def _sample_bbox(self, index: int) -> BBox:
@@ -388,14 +401,22 @@ class ODEInstrumentDataset(_ProductDataset):
         # Fetched lazily (on first sample, not __init__) so construction never
         # touches the network -- tests can build instances hermetically.
         if self._footprints is None:
-            pts: set[str] = set()
+            # Grouped by (pt, product_id): a product type can mix products
+            # this instrument doesn't offer (e.g. a sibling instrument's
+            # products under the same pt), so footprints must go through the
+            # same product_id narrowing as the file search itself, or the
+            # sampling pool would include sites that never yield this
+            # instrument's data.
+            queries: set[tuple[str, str | None]] = set()
             for name in self.products:
                 entry = self.all_products[name]
                 if isinstance(entry, ODEAsset):
-                    pts.add(entry.pt)
+                    queries.add((entry.pt, entry.product_id))
             footprints: list[BBox] = []
-            for pt in pts:
-                products = ode.query_products(self.ihid, self.iid, pt, self.bbox, max_products=500)
+            for pt, product_id in queries:
+                products = ode.query_products(
+                    self.ihid, self.iid, pt, self.bbox, max_products=500, product_id=product_id
+                )
                 footprints.extend(product.bbox for product in products if product.bbox is not None)
             self._footprints = footprints
         return self._footprints
@@ -575,6 +596,47 @@ class MiniRF(ODEInstrumentDataset):
         ),
         "oc": ODEAsset(
             "lro_minirf_oc", "MOSDDR", r"GLOBAL_OC_128PPD_SIMP_0C\.LBL", nodata=_MINIRF_NODATA
+        ),
+    }
+
+
+class DivinerGDR(ODEInstrumentDataset):
+    """LRO Diviner rock abundance and regolith temperature, mission-cumulative
+    global mosaics, 128 px/degree, searched via PDS ODE (product type
+    ``GDR_L3``).
+
+    Each parameter is republished periodically as a new cumulative global
+    mosaic (same footprint, more orbits folded in); this pins the most
+    complete date verified live, 2016-09-13, rather than a loose pattern
+    that would otherwise match all ~105 dated products and mosaic redundant
+    copies of the same coverage. ``GDR_L3`` also carries per-orbit
+    bolometric temperature (``TBOL``), which alone outnumbers every other
+    parameter combined, so a bbox-only search would need to page through
+    thousands of unrelated candidates before ever reaching a dated RA or ST
+    product; ``product_id`` narrows the ODE search itself to just that
+    parameter (verified live 2026-07-21 -- see :func:`astrofetch.data.ode.query_products`).
+    Coverage is -80 to 80 latitude (cylindrical projection, not a bug).
+    ``TBOL`` is intentionally not offered here: it is not part of this
+    cumulative-mosaic family and mixing single-orbit epochs into a windowed
+    read would misrepresent the data.
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "Diviner (rock abundance / regolith temperature)"
+    ihid = "LRO"
+    iid = "DLRE"
+    all_products = {
+        "rock_abundance": ODEAsset(
+            "lro_diviner_rock_abundance",
+            "GDR_L3",
+            r"DGDR_RA_CLC_CYL_20160913N_128_IMG\.LBL",
+            product_id="*ra_clc_cyl_20160913*",
+        ),
+        "regolith_temp": ODEAsset(
+            "lro_diviner_regolith_temp",
+            "GDR_L3",
+            r"DGDR_ST_CLC_CYL_20160913N_128_IMG\.LBL",
+            product_id="*st_clc_cyl_20160913*",
         ),
     }
 
