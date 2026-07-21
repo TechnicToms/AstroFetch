@@ -62,5 +62,13 @@
     {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_CONFIDENCE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_confidence_cog.tif"},
     {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_SLOPE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_slope_cog.tif"},
     {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_COLOR-SLOPE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_color-slope_cog.tif"}
+  ],
+  "CLEM/UVVIS/MDIM": [
+    {"FileName": "UI73N007.IMG", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/geocopy/imaging/clem1-l-u-5-dim-uvvis-v1.0/cl_4001/data/ui73n007.img"},
+    {"FileName": "UI73N007.JPG", "Type": "Browse", "URL": "https://pds-geosciences.wustl.edu/geocopy/imaging/clem1-l-u-5-dim-uvvis-v1.0/cl_4001/browse/750nm/large/ui73n007.jpg"}
+  ],
+  "CLEM/NIR/MDIM": [
+    {"FileName": "NI73N007.IMG", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/geocopy/imaging/clem1-l-n-5-dim-nir-v1.0/cl_5001/data/ni73n007.img"},
+    {"FileName": "NI73N007.JPG", "Type": "Browse", "URL": "https://pds-geosciences.wustl.edu/geocopy/imaging/clem1-l-n-5-dim-nir-v1.0/cl_5001/browse/2000nm/large/ni73n007.jpg"}
   ]
 }

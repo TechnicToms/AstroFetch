@@ -22,6 +22,8 @@ from astrofetch.moon.datasets import (
     LROCNACROI,
     SLDEM2015,
     WACGLD100,
+    ClementineNIR,
+    ClementineUVVIS,
     DivinerGDR,
     KaguyaTC,
     KaguyaTCImagery,
@@ -183,6 +185,17 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(ShadowCam, "mosaic"),
         _spec(ShadowCam, "dtm"),
         _spec(ShadowCam, "confidence"),
+        _spec(ClementineUVVIS, "band_415nm"),
+        _spec(ClementineUVVIS, "band_750nm"),
+        _spec(ClementineUVVIS, "band_900nm"),
+        _spec(ClementineUVVIS, "band_950nm"),
+        _spec(ClementineUVVIS, "band_1000nm"),
+        _spec(ClementineNIR, "band_1100nm"),
+        _spec(ClementineNIR, "band_1250nm"),
+        _spec(ClementineNIR, "band_1500nm"),
+        _spec(ClementineNIR, "band_2000nm"),
+        _spec(ClementineNIR, "band_2600nm"),
+        _spec(ClementineNIR, "band_2780nm"),
     )
 }
 
@@ -235,6 +248,13 @@ MOON = Body(
             name=ShadowCam.probe,
             instruments={
                 "shadowcam": _instrument(ShadowCam),
+            },
+        ),
+        "clementine": Probe(
+            name=ClementineUVVIS.probe,
+            instruments={
+                "uvvis": _instrument(ClementineUVVIS),
+                "nir": _instrument(ClementineNIR),
             },
         ),
     },

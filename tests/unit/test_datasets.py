@@ -683,3 +683,37 @@ def test_catalog_includes_shadowcam() -> None:
     assert spec.ihid == "KPLO"
     assert spec.iid == "ShadowCam"
     assert spec.pt == "CMOS"
+
+
+def test_clementine_uvvis_pattern_selects_the_data_file() -> None:
+    _assert_pattern_selects(
+        af.ClementineUVVIS.all_products["band_415nm"], "CLEM/UVVIS/MDIM", "ui73n007.img"
+    )
+
+
+def test_clementine_uvvis_bands_index_into_the_same_file() -> None:
+    urls_and_bands = [
+        (entry.pattern, entry.band) for entry in af.ClementineUVVIS.all_products.values()
+    ]
+    assert len({pattern for pattern, _ in urls_and_bands}) == 1
+    assert sorted(band for _, band in urls_and_bands) == [1, 2, 3, 4, 5]
+
+
+def test_clementine_nir_pattern_selects_the_data_file() -> None:
+    _assert_pattern_selects(
+        af.ClementineNIR.all_products["band_1100nm"], "CLEM/NIR/MDIM", "ni73n007.img"
+    )
+
+
+def test_clementine_nir_bands_index_into_the_same_file() -> None:
+    bands = sorted(entry.band for entry in af.ClementineNIR.all_products.values())
+    assert bands == [1, 2, 3, 4, 5, 6]
+
+
+def test_catalog_includes_clementine() -> None:
+    assert MOON.probes["clementine"].instruments["uvvis"].dataset is af.ClementineUVVIS
+    assert MOON.probes["clementine"].instruments["nir"].dataset is af.ClementineNIR
+    spec = LAYERS["clem_uvvis_415nm"]
+    assert spec.ihid == "CLEM"
+    assert spec.iid == "UVVIS"
+    assert spec.pt == "MDIM"

@@ -801,6 +801,52 @@ class ShadowCam(ODEInstrumentDataset):
     }
 
 
+class ClementineUVVIS(ODEInstrumentDataset):
+    """Clementine UVVIS 5-band basemap, searched via PDS ODE (product type
+    ``MDIM``): reflectance at 415, 750, 900, 950, and 1000 nm (per mission
+    documentation; band order verified live 2026-07-21 as 5 bands matching
+    the product's declared band count). Sinusoidal-projected, attached PDS3
+    label -- the first attached-label source in this project; georeferencing
+    verified live by comparing the opened raster's bounds against the
+    product's own ODE footprint (rule 1's "verify, don't assume" lesson;
+    this one checked out, unlike the LROCNACDTM PDS4-label case).
+    """
+
+    probe = "Clementine"
+    instrument = "UVVIS (5-band basemap)"
+    ihid = "CLEM"
+    iid = "UVVIS"
+    all_products = {
+        "band_415nm": ODEAsset("clem_uvvis_415nm", "MDIM", r"UI\d{2}[NS]\d{3}\.IMG", band=1),
+        "band_750nm": ODEAsset("clem_uvvis_750nm", "MDIM", r"UI\d{2}[NS]\d{3}\.IMG", band=2),
+        "band_900nm": ODEAsset("clem_uvvis_900nm", "MDIM", r"UI\d{2}[NS]\d{3}\.IMG", band=3),
+        "band_950nm": ODEAsset("clem_uvvis_950nm", "MDIM", r"UI\d{2}[NS]\d{3}\.IMG", band=4),
+        "band_1000nm": ODEAsset("clem_uvvis_1000nm", "MDIM", r"UI\d{2}[NS]\d{3}\.IMG", band=5),
+    }
+
+
+class ClementineNIR(ODEInstrumentDataset):
+    """Clementine NIR 6-band basemap, searched via PDS ODE (product type
+    ``MDIM``): reflectance at 1100, 1250, 1500, 2000, 2600, and 2780 nm (per
+    mission documentation; band order verified live 2026-07-21 as 6 bands
+    matching the product's declared band count). Same sinusoidal-projected,
+    attached-PDS3-label archive as :class:`ClementineUVVIS`.
+    """
+
+    probe = "Clementine"
+    instrument = "NIR (6-band basemap)"
+    ihid = "CLEM"
+    iid = "NIR"
+    all_products = {
+        "band_1100nm": ODEAsset("clem_nir_1100nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=1),
+        "band_1250nm": ODEAsset("clem_nir_1250nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=2),
+        "band_1500nm": ODEAsset("clem_nir_1500nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=3),
+        "band_2000nm": ODEAsset("clem_nir_2000nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=4),
+        "band_2600nm": ODEAsset("clem_nir_2600nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=5),
+        "band_2780nm": ODEAsset("clem_nir_2780nm", "MDIM", r"NI\d{2}[NS]\d{3}\.IMG", band=6),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 

@@ -240,6 +240,48 @@ def test_shadowcam_fetches_a_real_patch(tmp_path: Path) -> None:
     assert bool(sample["mask"].any())
 
 
+_TYCHO_AREA = (-12.5, -44.5, -10.5, -42.5)
+
+
+@pytest.mark.live
+def test_clementine_uvvis_fetches_a_real_patch(tmp_path: Path) -> None:
+    """Clementine UVVIS, sinusoidal-projected attached-label PDS3 archive,
+    over Tycho (a bright, high-albedo crater)."""
+    moondata = af.ClementineUVVIS(
+        products=["band_750nm"],
+        bbox=_TYCHO_AREA,
+        resolution=200.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= 0.0).all()) and bool((valid <= 1.0).all())
+
+
+@pytest.mark.live
+def test_clementine_nir_fetches_a_real_patch(tmp_path: Path) -> None:
+    """Clementine NIR over the same Tycho area."""
+    moondata = af.ClementineNIR(
+        products=["band_1500nm"],
+        bbox=_TYCHO_AREA,
+        resolution=200.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= 0.0).all()) and bool((valid <= 1.0).all())
+
+
 @pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
