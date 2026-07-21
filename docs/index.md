@@ -44,6 +44,30 @@ for batch in loader:
     batch["image"]  # torch.Tensor (16, C, H, W)
 ```
 
+## Beyond the STAC catalog
+
+Some instruments (LROC, LOLA, Mini-RF, Diviner, ShadowCam, Clementine, ...)
+aren't in the USGS ARD STAC catalog at all; those datasets search the NASA
+PDS Orbital Data Explorer instead, or read a single fixed mosaic URL, behind
+the exact same interface. The full roster is in
+[Instrument datasets](reference/datasets.md); two examples:
+
+```python
+import astrofetch as af
+
+# LROC NAC stereo DTM sites are a few hundred named sites, not global
+# coverage, so sampled windows are drawn from inside a real site by default.
+nac = af.LROCNACDTM(products=["dtm", "ortho"], bbox=(3.0, 25.0, 4.5, 26.5))
+sample = nac[0]
+
+# A global 100 m WAC mosaic and a global LOLA DEM, channel-stacked with `&`.
+terrain = af.LROCWACMosaic(resolution=100) & af.LOLA(resolution=100)
+
+# ShadowCam mosaics of permanently shadowed polar craters, another
+# site-based instrument -- footprint sampling applies the same way.
+shadowcam = af.ShadowCam(products=["mosaic"])
+```
+
 ## Discovering what data exists
 
 The `MOON` catalog enumerates probes, instruments, and products, and points at

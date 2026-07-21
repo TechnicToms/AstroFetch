@@ -28,6 +28,7 @@ nav:
   - Roadmap: roadmap.md
   - API Reference:
       - Instrument datasets: reference/datasets.md
+      - Raw granules (experimental): reference/granules.md
       - Catalog & registry: reference/catalog.md
       - Data layer: reference/data.md
 

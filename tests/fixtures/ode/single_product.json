@@ -1,0 +1,21 @@
+{
+  "ODEResults": {
+    "Status": "Success",
+    "Products": {
+      "Product": {
+        "pdsid": "sdp.nac_dtm.apollo15",
+        "Westernmost_longitude": 3.5,
+        "Easternmost_longitude": 4.0,
+        "Minimum_latitude": 25.8,
+        "Maximum_latitude": 26.2,
+        "Product_files": {
+          "Product_file": {
+            "FileName": "NAC_DTM_APOLLO15.XML",
+            "Type": "Product",
+            "URL": "https://pds.example/NAC_DTM_APOLLO15.xml"
+          }
+        }
+      }
+    }
+  }
+}

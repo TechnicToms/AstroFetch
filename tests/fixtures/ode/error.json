@@ -1,0 +1,6 @@
+{
+  "ODEResults": {
+    "Status": "ERROR",
+    "Error": "Invalid IIPT - no combination of Instrument Host Id, Instrument Id, and Product Type exists"
+  }
+}

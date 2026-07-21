@@ -1,0 +1,36 @@
+{
+  "ODEResults": {
+    "Status": "Success",
+    "Products": {
+      "Product": [
+        {
+          "pdsid": "a",
+          "Product_files": {
+            "Product_file": [
+              {
+                "FileName": "A_DTM.TIF",
+                "Type": "Product",
+                "URL": "https://x/a_dtm.tif"
+              },
+              {
+                "FileName": "A_BROWSE.JPG",
+                "Type": "Browse",
+                "URL": "https://x/a_browse.jpg"
+              }
+            ]
+          }
+        },
+        {
+          "pdsid": "b",
+          "Product_files": {
+            "Product_file": {
+              "FileName": "B_DTM.TIF",
+              "Type": "Product",
+              "URL": "https://x/b_dtm.tif"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
