@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, and others) worki
 
 ## What this project is
 
-AstroFetch is an open source, PyTorch-friendly library for ML-ready access to planetary science data, starting with the Moon. The core promise: request a bounding box, receive a coregistered multichannel tensor. The core API: one dataset class per instrument (`KaguyaTC`, `LROCWAC`, ...), each yielding TorchGeo-style sample dicts with a coregistered multichannel `"image"` tensor, a validity `"mask"`, and per-channel provenance; instruments compose with `&` (`IntersectionDataset`) to stack channels over their overlapping region. Probes and bodies are discovery-catalog metadata (`MOON`), never dataset boundaries. It is a thin composition layer over existing archive tooling, never a mirror of any archive.
+AstroFetch is an open source, PyTorch-friendly library for ML-ready access to planetary science data, starting with the Moon. The core promise: request a bounding box, receive a coregistered multichannel tensor. The core API: one dataset class per instrument (`KaguyaTC`, `LROCNACDTM`, `LROCWACMosaic`, ...), each yielding TorchGeo-style sample dicts with a coregistered multichannel `"image"` tensor, a validity `"mask"`, and per-channel provenance; instruments compose with `&` (`IntersectionDataset`) to stack channels over their overlapping region. Probes and bodies are discovery-catalog metadata (`MOON`), never dataset boundaries. It is a thin composition layer over existing archive tooling, never a mirror of any archive. A separate, explicitly-marked-experimental family (`astrofetch.moon.granules`) deviates from this contract for raw, non-map-projected camera data — see rule 7 and its own module docstring.
 
 ## Architecture at a glance
 
@@ -13,27 +13,31 @@ src/astrofetch/
   data/
     endpoints.py      # ALL external URLs live here, nowhere else
     stac.py           # STAC queries (pystac-client) against USGS Astrogeology ARD
-    raster.py         # windowed COG reads (rasterio), scale/offset -> physical values
+    ode.py            # PDS Orbital Data Explorer (ODE) REST queries, for instruments STAC doesn't carry
+    raster.py         # windowed/full raster reads (rasterio), scale/offset -> physical values
     grid.py           # target grid definition, reprojection, channel stacking
     cache.py          # throwaway local cache, keyed by (collection, item, window, res)
-    tiles.py          # secondary rendered mode: USGS WMS, Moon Trek WMTS
+    tiles.py          # secondary rendered mode: USGS WMS, Moon Trek WMTS (not yet built)
   moon/
-    layers.py         # layer registry (name -> STAC collection + read config) + Body/Probe/Instrument catalog (MOON)
-    datasets.py       # instrument dataset classes (InstrumentDataset, KaguyaTC, KaguyaTCImagery) + IntersectionDataset
+    layers.py         # layer registry (name -> source config: STAC/ODE/mosaic) + Body/Probe/Instrument catalog (MOON)
+    datasets.py       # windowed dataset classes: InstrumentDataset (STAC), ODEInstrumentDataset (PDS ODE),
+                       # MosaicDataset (fixed URL), concrete instruments, IntersectionDataset
+    granules.py       # EXPERIMENTAL: raw, non-map-projected granule datasets (GranuleDataset and subclasses)
 tests/
   unit/               # network fully mocked, runs in CI
   live/               # hits real endpoints, manual trigger only
+  fixtures/           # recorded JSON response fixtures for unit tests
 ```
 
 ## Non-negotiable design rules
 
-1. **Default to wrapping archive tooling; reimplement only with a measured reason.** pystac-client queries STAC, rasterio reads and windows COGs. Reach for these first — reinventing them is usually wasted effort and a maintenance burden. Two carve-outs: (a) **never** hand-roll domain-specific correctness — map-projection math, COG windowing, scale/offset conversion — the bugs there are subtle and scientific, so always defer to the established library; (b) generic plumbing (discovery helpers, small utilities) *may* be replaced when a dependency is provably a bad trade — too slow on the hot path, a heavy transitive dependency for a sliver of use, etc. Justify any such reimplementation in the PR description with the concrete reason.
+1. **Default to wrapping archive tooling; reimplement only with a measured reason.** pystac-client queries STAC, rasterio reads and windows rasters. Reach for these first — reinventing them is usually wasted effort and a maintenance burden. Two carve-outs: (a) **never** hand-roll domain-specific correctness — map-projection math, raster windowing, scale/offset conversion — the bugs there are subtle and scientific, so always defer to the established library; (b) generic plumbing (discovery helpers, small utilities) *may* be replaced when a dependency is provably a bad trade — too slow on the hot path, a heavy transitive dependency for a sliver of use, etc. Justify any such reimplementation in the PR description with the concrete reason. Note that "defer to the library" can still require picking the *right entry point* into that library: for the LROC NAC DTM PDS4 products, opening the data file directly (GDAL's native GTiff/PDS driver) gives correct georeferencing and nodata, while opening the same product through its detached `.xml` label does not (a confirmed GDAL PDS4-driver resolution-unit parsing bug, not an astrofetch reimplementation) — verify a new source's actual behavior live before trusting either path.
 2. **All external endpoint URLs go in `data/endpoints.py`.** No URL literals anywhere else in `src/`. Endpoints move (QuickMap changed domains); one module keeps that survivable.
-3. **Quantitative vs rendered is a hard boundary.** The STAC/COG path returns physical values and is the only path for quantitative or ML use. The WMS/WMTS tile path returns rendered 8-bit imagery and must be labeled as such in APIs and docs. Never mix them silently.
+3. **Quantitative vs rendered is a hard boundary.** The STAC/ODE/mosaic paths return physical values and are the only paths for quantitative or ML use. The WMS/WMTS tile path returns rendered 8-bit imagery and must be labeled as such in APIs and docs. Never mix them silently — this is also why a dataset offers only the quantitative products a source provides: e.g. `LROCNACDTM` deliberately excludes the SDP pipeline's color-coded slope and shaded-relief products, which are rendered 8-bit visualizations, not calibrated rasters.
 4. **Cache is disposable.** Nothing in the cache layer may be load-bearing for correctness or reproducibility. Everything fetched on demand must be re-fetchable from the archive and safe to delete; never commit fetched data to the repo.
-5. **Be polite to archive servers.** Default concurrency is low, retries use exponential backoff, and any code path that could issue many requests must go through the rate-limited session in `data/stac.py` / `data/tiles.py`. Never write a loop that hammers NASA or USGS servers.
-6. **Body-namespaced layout.** Moon-specific code lives under `moon/`. Body-agnostic code (grid math, COG reads, caching) lives under `data/`. Adding Mars must be a new sibling module, not edits scattered through existing files.
-7. **Samples are dicts with a fixed contract.** `"image"` is (C, H, W) float32 (physical values, channel i = `layers[i]`), `"mask"` is (C, H, W) bool validity, plus `"layers"`, `"bbox"`, `"crs"`, and `"resolution"` provenance keys. Datasets that deviate must document it. Samples must collate under the default `DataLoader` collation.
+5. **Be polite to archive servers.** Default concurrency is low, retries use exponential backoff, and any code path that could issue many requests must go through the rate-limited session in `data/stac.py` / `data/ode.py` / `data/tiles.py`. Never write a loop that hammers NASA, USGS, or PDS-node servers.
+6. **Body-namespaced layout.** Moon-specific code lives under `moon/`. Body-agnostic code (grid math, raster reads, caching, archive search) lives under `data/`. Adding Mars must be a new sibling module, not edits scattered through existing files.
+7. **Samples are dicts with a fixed contract.** `"image"` is (C, H, W) float32 (physical values, channel i = `layers[i]`), `"mask"` is (C, H, W) bool validity, plus `"layers"`, `"bbox"`, `"crs"`, and `"resolution"` provenance keys. Datasets that deviate must document it — the one deliberate exception is `astrofetch.moon.granules`, whose module docstring documents its different contract (no bbox windowing, ragged shapes, no `&`) up front. Samples must collate under the default `DataLoader` collation; granule datasets are the one documented exception (`batch_size=None` or a custom `collate_fn`).
 
 ## Dev environment and commands
 
@@ -76,24 +80,26 @@ Widely-adopted defaults that keep the codebase consistent. When in doubt, match 
 
 ## Domain notes agents should know
 
-- Coordinates are IAU 2015 Moon (ocentric, longitude 0 to 360 or -180 to 180 must be normalized at the API boundary; internal convention is -180 to 180).
+- Coordinates are IAU 2015 Moon (ocentric, longitude 0 to 360 or -180 to 180 must be normalized at the API boundary; internal convention is -180 to 180). PDS ODE's REST API wants 0-360 `westernlon`/`easternlon`; `data/ode.py` converts at that one boundary — shift the west bound into 0-360 and add back the original span, rather than taking `% 360` of each bound independently, or a full-Moon bbox like `(-180, 180)` collapses to a zero-width query.
 - Equatorial data uses equirectangular projection; polar data uses polar stereographic. `data/grid.py` owns this decision; never assume equirectangular blindly near the poles.
-- COGs from the USGS ARD catalog often store 16-bit DN with scale/offset to physical units (for example Kaguya TC radiance). Always apply scale/offset in `raster.py`; downstream code assumes physical values.
-- Nodata regions are common (orbital swaths do not cover everything). Every sample carries a boolean validity tensor under its `"mask"` key; do not silently zero-fill.
+- COGs and other rasters often store 16-bit DN (or similar) with scale/offset to physical units (for example Kaguya TC radiance). Always apply scale/offset in `raster.py`; downstream code assumes physical values.
+- Nodata regions are common (orbital swaths do not cover everything). Every sample carries a boolean validity tensor under its `"mask"` key; do not silently zero-fill. Some PDS products omit a declared nodata value even though their raster does not cover its full requested extent; `raster.read_window`'s `nodata_override` exists for exactly this (see its docstring) — reach for a source's own declared nodata first, and only override when you have live-verified the product genuinely has none.
+- Some instruments cover only a handful of named sites, not the whole Moon (e.g. LROC NAC stereo DTMs via PDS ODE). `ODEInstrumentDataset.footprint_sampling` draws windows from inside real product footprints for exactly this case; leave it off for globally-covered instruments.
 
 ## What NOT to do
 
-- Do not add dependencies casually. Core deps are: torch, rasterio, pystac-client, numpy. Anything else needs a justification in the PR description.
+- Do not add dependencies casually. Core deps are: torch, rasterio, pystac-client, numpy, requests. Anything else needs a justification in the PR description.
 - Do not commit data files, fetched tiles, or notebooks with executed output containing large images.
 - Do not target QuickMap's internal tile URLs; they are not a public API. Use USGS WMS or Moon Trek WMTS via `data/endpoints.py`.
 - Do not "fix" scientific constants or projection parameters without a source; cite the reference in the commit message.
 - Do not weaken the mocked-network rule in unit tests to make something pass.
+- Do not trust a raster driver's georeferencing just because the file opens and reads without error — a mechanically successful open/read is not proof the transform, bounds, or nodata are correct (see rule 1's PDS4-label example). Verify live against a known location before shipping a new source.
 
 ## Roadmap
 
 Check the current phase before proposing work; for example, do not build Phase 2 datasets and transforms while Phase 1 (STAC sampler MVP) is incomplete. Everything is a thin layer above existing archive tooling, never a mirror of any archive.
 
-**Current phase: Phase 1 (STAC sampler). Phase 0 scaffolding is complete. `InstrumentDataset.read` now fetches the real COGs covering a window from the USGS ARD catalog, reprojects them onto a common geographic grid, applies scale/offset, mosaics overlapping items, and caches the result — no more synthetic tensors.**
+**Current phase: Phase 2 (datasets and transforms). Phase 0 and Phase 1 are complete: `InstrumentDataset.read` fetches the real COGs covering a window from the USGS ARD catalog, reprojects them onto a common geographic grid, applies scale/offset, mosaics overlapping items, and caches the result. Phase 2 has started delivering new data sources beyond STAC (see below); `GridTileDataset`, spatial-split samplers, transforms, and the WMS/WMTS rendered mode remain open.**
 
 ### Phase 0: Scaffolding (weekend 1)
 
@@ -127,15 +133,24 @@ sample["layers"]  # ["kaguya_tc_dtm", "kaguya_tc_image"], plus bbox/crs/resoluti
 
 - Local disk cache keyed by (collection, item, window, resolution), transparent and clearable.
 
-Exit criteria: `KaguyaTC(products=["dtm", "ortho"], bbox=...)` fetches a real, coregistered two-layer patch from the USGS ARD catalog on a clean machine (covered by `tests/live`). A plotting quickstart notebook is a nice-to-have follow-up.
+Exit criteria (met): `KaguyaTC(products=["dtm", "ortho"], bbox=...)` fetches a real, coregistered two-layer patch from the USGS ARD catalog on a clean machine (covered by `tests/live`). A plotting quickstart notebook is a nice-to-have follow-up, still open.
 
 ### Phase 2: Datasets and transforms (2 to 3 weekends)
+
+**New data sources beyond STAC (done):** the USGS ARD STAC catalog has no LROC, LOLA, or other lunar collections beyond Kaguya TC, so growing past it required a second search backend.
+
+- `astrofetch.data.ode`: query the NASA PDS Orbital Data Explorer (ODE) REST API by instrument host/id and product type, politely (same retry/backoff/timeout posture as `data/stac.py`), normalizing ODE's JSON quirks (single-result dict vs list, `"No Products Found"`, HTTP-200 error bodies).
+- `astrofetch.moon.datasets.ODEInstrumentDataset`: the ODE-backed sibling of `InstrumentDataset`, with `footprint_sampling` for instruments that cover only named sites rather than the whole Moon. Ships `LROCNACDTM` (LRO LROC NAC stereo DTM sites: elevation, orthoimage, pixel confidence).
+- `astrofetch.moon.datasets.MosaicDataset`: reads one well-known archive URL directly, for instruments published as a single global (or near-global) file. Ships `LROCWACMosaic` (the LRO WAC 100 m global mosaic — the dataset this phase originally named as its LRO WAC deliverable, shipped as `LROCWACMosaic` rather than `LROCWAC` since a raw, non-map-projected `LROCWACRaw` also now exists), `LOLA` (global gridded DEM), and `SLDEM2015` (LOLA + Kaguya TC co-registered DEM).
+- `astrofetch.moon.granules` (new, experimental — see its Deliberate non-goals amendment below): raw, camera-geometry PDS granules for instruments that are not map-projected at all (`LROCNACRaw`, `LROCWACRaw`, `M3`). A deliberately different, documented sample contract; not part of the `InstrumentDataset` family.
+
+**Still open:**
 
 - `astrofetch.moon.datasets`: random-bbox sampling already ships inside the instrument datasets (Phase 0); add `GridTileDataset` (deterministic tiling of an ROI) over the same `read(bbox)` interface, plus region-list sampling for the random path.
 - Samplers that respect spatial autocorrelation for train/val/test splits (block splitting, not random pixels).
 - Transforms: per-channel normalization stats, nodata masking, polar/equatorial projection handling made explicit.
 - Secondary access mode behind the same interface: WMS/WMTS rendered mode, clearly labeled non-quantitative.
-- LRO WAC global mosaic: the USGS ARD STAC catalog has no LRO WAC collection, so add it here from a non-STAC source (a public COG mosaic or WMS/WMTS), behind the same instrument-dataset interface as a new `LROCWAC` class.
+- The wider PDS ODE roster beyond the four flagship datasets above: Diviner, Mini-RF, Clementine, ShadowCam, Kaguya MI, and further WAC-derived products (TiO2, GLD100, 7-color reflectance) all fit the same `ODEInstrumentDataset`/`MosaicDataset` pattern; each needs its own live-verified product type and filename pattern before shipping (rule 1's PDS4-label lesson applies to every new source, not just the ones already caught).
 
 Exit criteria: `DataLoader` trains a toy model on random lunar patches without custom user code.
 
@@ -149,7 +164,7 @@ Exit criteria: `DataLoader` trains a toy model on random lunar patches without c
 ### Deliberate non-goals for v0.x
 
 - No mirroring or rehosting of raw PDS archives.
-- No PDS granule / full-fidelity product access in v0.x; the STAC/COG path is the only quantitative source.
+- **Amended:** raw PDS granule access was originally ruled out entirely for v0.x ("the STAC/COG path is the only quantitative source"). `astrofetch.moon.granules` now provides it, narrowly: camera-geometry data only, no map projection, no ISIS/SPICE, explicitly marked experimental with its own documented (different) sample contract, and excluded from the `LAYERS` registry. The `InstrumentDataset`/`ODEInstrumentDataset`/`MosaicDataset` windowed-and-reprojected path remains the only *quantitative, coregistered-tensor* source — that guarantee is unchanged.
 - No pretrained models or frozen benchmarks; AstroFetch delivers ML-ready data, you bring the model.
 - No GUI or web viewer; QuickMap and Trek exist.
 - No Earth support; TorchGeo owns that space.
@@ -157,6 +172,7 @@ Exit criteria: `DataLoader` trains a toy model on random lunar patches without c
 ### Risks and mitigations
 
 - Endpoint drift (services move, as QuickMap's domain change showed): keep all endpoint URLs in one config module, cover them with the live test suite, and document last-verified dates.
-- M3 data quality issues: defer the M3 dataset class until after v0.1 unless a user strictly needs it; budget preprocessing time if so.
+- M3 data quality: rather than deferring M3 entirely, it shipped scoped to what's verified reliable — the experimental raw-granule path (`astrofetch.moon.granules.M3`), radiance plus geolocation backplane, no map projection or further calibration claimed. A map-projected, quantitative M3 `InstrumentDataset`/`ODEInstrumentDataset` remains deferred until a user need justifies the preprocessing work.
+- Archive driver quirks: a source opening and reading without error is not proof its georeferencing or nodata are correct (see design rule 1's PDS4-label example, caught via `tests/live` before shipping `LROCNACDTM`). Live-verify a new source against a known location, not just that `rasterio.open` succeeds.
 - Server load courtesy: default to conservative request concurrency, exponential backoff, and a bulk prefetch helper so training never hammers archive servers with random access.
 - Solo-maintainer bus factor: keep scope small, tests honest, and architecture boring enough that contributors can navigate it without you.
