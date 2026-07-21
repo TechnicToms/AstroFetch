@@ -173,6 +173,42 @@ def test_wac_tio2_fetches_a_real_patch(tmp_path: Path) -> None:
 
 
 @pytest.mark.live
+def test_wac_global_tiled_fetches_a_real_patch(tmp_path: Path) -> None:
+    """LROC WAC global mosaic, tiled/searched sibling of LROCWACMosaic: one
+    E-family quadrant tile, opened via its .IMG data file."""
+    moondata = af.LROCWACGlobal(
+        bbox=(23.0, 18.0, 25.0, 20.0),
+        resolution=100.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+
+
+@pytest.mark.live
+def test_wac_color_fetches_a_real_patch(tmp_path: Path) -> None:
+    """LROC WAC 7-color reflectance, 643 nm band."""
+    moondata = af.LROCWACColor(
+        products=["refl_643nm"],
+        bbox=(23.0, 18.0, 25.0, 20.0),
+        resolution=500.0,
+        patch_size=16,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 16, 16)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= 0.0).all()) and bool((valid <= 1.0).all())
+
+
+@pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
     dataset = af.LROCNACRaw(bbox=_APOLLO15_AREA, max_products=1, rows=slice(0, 64))

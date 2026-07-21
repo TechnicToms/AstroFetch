@@ -599,3 +599,28 @@ def test_wac_tio2_pattern_selects_the_data_file() -> None:
 def test_catalog_includes_wac_gld100_and_tio2() -> None:
     assert MOON.probes["lro"].instruments["wac_gld100"].dataset is af.WACGLD100
     assert MOON.probes["lro"].instruments["wac_tio2"].dataset is af.WACTiO2
+
+
+def test_wac_global_pattern_selects_only_the_e_family_tile() -> None:
+    _assert_pattern_selects(
+        af.LROCWACGlobal.all_products["morphology"], "LRO/LROC/BDRWGL", "E300N0450_100M.IMG"
+    )
+
+
+def test_wac_color_patterns_select_the_right_band_and_resolution() -> None:
+    _assert_pattern_selects(
+        af.LROCWACColor.all_products["refl_321nm"], "LRO/LROC/MDREMP", "321NM_E300N0450_064P.IMG"
+    )
+    _assert_pattern_selects(
+        af.LROCWACColor.all_products["refl_643nm"], "LRO/LROC/MDREMP", "643NM_E300N0450_064P.IMG"
+    )
+
+
+def test_wac_color_does_not_offer_the_3band_composite() -> None:
+    assert "3band" not in af.LROCWACColor.all_products
+    assert len(af.LROCWACColor.all_products) == 7
+
+
+def test_catalog_includes_wac_global_and_color() -> None:
+    assert MOON.probes["lro"].instruments["wac_global_tiled"].dataset is af.LROCWACGlobal
+    assert MOON.probes["lro"].instruments["wac_color"].dataset is af.LROCWACColor

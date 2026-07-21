@@ -31,5 +31,18 @@
     {"FileName": "WAC_TIO2_E350N0450.XML", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/SDP/WAC_TIO2/WAC_TIO2_E350N0450.xml"},
     {"FileName": "WAC_TIO2_E350N0450.MASK.TIF", "Type": "Browse", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/WAC_TIO2/WAC_TIO2_E350N0450.MASK.TIF"},
     {"FileName": "WAC_TIO2_E350N0450.TIF", "Type": "Browse", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/WAC_TIO2/WAC_TIO2_E350N0450.TIF"}
+  ],
+  "LRO/LROC/BDRWGL": [
+    {"FileName": "WAC_GLOBAL_E300N0450_100M.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_GLOBAL/WAC_GLOBAL_E300N0450_100M.IMG"},
+    {"FileName": "WAC_GLOBAL_E300N0450_256P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_GLOBAL/WAC_GLOBAL_E300N0450_256P.IMG"},
+    {"FileName": "WAC_GLOBAL_O000N0000_100M.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_GLOBAL/WAC_GLOBAL_O000N0000_100M.IMG"},
+    {"FileName": "WAC_GLOBAL_E000N0000_004P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_GLOBAL/WAC_GLOBAL_E000N0000_004P.IMG"}
+  ],
+  "LRO/LROC/MDREMP": [
+    {"FileName": "WAC_EMP_321NM_E300N0450_064P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/MDR/WAC_EMP/WAC_EMP_321NM_E300N0450_064P.IMG"},
+    {"FileName": "WAC_EMP_360NM_E300N0450_064P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/MDR/WAC_EMP/WAC_EMP_360NM_E300N0450_064P.IMG"},
+    {"FileName": "WAC_EMP_643NM_E300N0450_064P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/MDR/WAC_EMP/WAC_EMP_643NM_E300N0450_064P.IMG"},
+    {"FileName": "WAC_EMP_643NM_E300N0450_100M.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/MDR/WAC_EMP/WAC_EMP_643NM_E300N0450_100M.IMG"},
+    {"FileName": "WAC_EMP_3BAND_E300N0450_064P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/MDR/WAC_EMP/WAC_EMP_3BAND_E300N0450_064P.IMG"}
   ]
 }

@@ -24,6 +24,8 @@ from astrofetch.moon.datasets import (
     DivinerGDR,
     KaguyaTC,
     KaguyaTCImagery,
+    LROCWACColor,
+    LROCWACGlobal,
     LROCWACMosaic,
     MiniRF,
     MosaicAsset,
@@ -166,6 +168,14 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(DivinerGDR, "regolith_temp"),
         _spec(WACGLD100, "dtm"),
         _spec(WACTiO2, "tio2"),
+        _spec(LROCWACGlobal, "morphology"),
+        _spec(LROCWACColor, "refl_321nm"),
+        _spec(LROCWACColor, "refl_360nm"),
+        _spec(LROCWACColor, "refl_415nm"),
+        _spec(LROCWACColor, "refl_566nm"),
+        _spec(LROCWACColor, "refl_604nm"),
+        _spec(LROCWACColor, "refl_643nm"),
+        _spec(LROCWACColor, "refl_689nm"),
     )
 }
 
@@ -200,6 +210,8 @@ MOON = Body(
                 "diviner": _instrument(DivinerGDR),
                 "wac_gld100": _instrument(WACGLD100),
                 "wac_tio2": _instrument(WACTiO2),
+                "wac_global_tiled": _instrument(LROCWACGlobal),
+                "wac_color": _instrument(LROCWACColor),
             },
             granules={
                 "nac_raw": LROCNACRaw,

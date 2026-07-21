@@ -686,6 +686,58 @@ class WACTiO2(ODEInstrumentDataset):
     }
 
 
+class LROCWACGlobal(ODEInstrumentDataset):
+    """LRO LROC WAC global morphology mosaic, 100 m/px, searched via PDS ODE
+    (product type ``BDRWGL``) as 8 near-global quadrant tiles rather than one
+    monolithic file -- the searched sibling of the fixed-URL
+    :class:`LROCWACMosaic`. Prefer this when only part of the globe is
+    needed (fetches one small tile instead of opening the ~2 GB monolith);
+    prefer :class:`LROCWACMosaic` for dense sampling over a wide area, since
+    its cache reuses one already-open source across reads. The same product
+    type also carries a whole-globe ``O``-prefixed file family at each
+    resolution (an alternative to :class:`LROCWACMosaic`, not offered here);
+    the pattern selects only the tiled ``E``-prefixed family (verified live
+    2026-07-21).
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "LROC WAC global mosaic (tiled)"
+    ihid = "LRO"
+    iid = "LROC"
+    all_products = {
+        "morphology": ODEAsset(
+            "lroc_wac_global_tiled", "BDRWGL", r"WAC_GLOBAL_E\d{3}[NS]\d{4}_100M\.IMG"
+        ),
+    }
+
+
+class LROCWACColor(ODEInstrumentDataset):
+    """LRO LROC WAC empirically-normalized 7-color reflectance, searched via
+    PDS ODE (product type ``MDREMP``): one product per band (321, 360, 415,
+    566, 604, 643, and 689 nm), each its own tiled family pinned to its
+    64 px/degree tiling (other resolutions of the 643 nm band also exist
+    under the same product type; the pattern excludes them). The composite
+    ``3BAND`` product and the Hapke-photometrically-normalized ``MDRHAP``
+    variant are not offered here. im-ldi PDS4 archive: opens the data
+    ``.IMG`` file directly, never its ``.xml`` label (rule 1's PDS4-label
+    lesson).
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "LROC WAC 7-color reflectance"
+    ihid = "LRO"
+    iid = "LROC"
+    all_products = {
+        "refl_321nm": ODEAsset("lroc_wac_refl_321nm", "MDREMP", r"WAC_EMP_321NM_.+_064P\.IMG"),
+        "refl_360nm": ODEAsset("lroc_wac_refl_360nm", "MDREMP", r"WAC_EMP_360NM_.+_064P\.IMG"),
+        "refl_415nm": ODEAsset("lroc_wac_refl_415nm", "MDREMP", r"WAC_EMP_415NM_.+_064P\.IMG"),
+        "refl_566nm": ODEAsset("lroc_wac_refl_566nm", "MDREMP", r"WAC_EMP_566NM_.+_064P\.IMG"),
+        "refl_604nm": ODEAsset("lroc_wac_refl_604nm", "MDREMP", r"WAC_EMP_604NM_.+_064P\.IMG"),
+        "refl_643nm": ODEAsset("lroc_wac_refl_643nm", "MDREMP", r"WAC_EMP_643NM_.+_064P\.IMG"),
+        "refl_689nm": ODEAsset("lroc_wac_refl_689nm", "MDREMP", r"WAC_EMP_689NM_.+_064P\.IMG"),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 
