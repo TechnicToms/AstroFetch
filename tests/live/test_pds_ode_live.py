@@ -138,6 +138,41 @@ def test_diviner_fetches_a_real_patch(tmp_path: Path) -> None:
 
 
 @pytest.mark.live
+def test_wac_gld100_fetches_a_real_patch(tmp_path: Path) -> None:
+    """WAC GLD100: 100 m tiled DTM, searched and opened via its .IMG data
+    file (never the PDS4 .xml label -- rule 1)."""
+    moondata = af.WACGLD100(
+        bbox=(23.0, 18.0, 25.0, 20.0),
+        resolution=100.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= -9500.0).all()) and bool((valid <= 10800.0).all())
+
+
+@pytest.mark.live
+def test_wac_tio2_fetches_a_real_patch(tmp_path: Path) -> None:
+    """WAC TiO2 abundance map over a mare region (TiO2-rich basalt)."""
+    moondata = af.WACTiO2(
+        bbox=(23.0, 18.0, 25.0, 20.0),
+        resolution=500.0,
+        patch_size=16,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 16, 16)
+    assert bool(sample["mask"].any())
+
+
+@pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
     dataset = af.LROCNACRaw(bbox=_APOLLO15_AREA, max_products=1, rows=slice(0, 64))

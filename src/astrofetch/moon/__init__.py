@@ -4,6 +4,7 @@ from astrofetch.moon.datasets import (
     LOLA,
     LROCNACDTM,
     SLDEM2015,
+    WACGLD100,
     DivinerGDR,
     InstrumentDataset,
     IntersectionDataset,
@@ -13,6 +14,7 @@ from astrofetch.moon.datasets import (
     MiniRF,
     MosaicDataset,
     ODEInstrumentDataset,
+    WACTiO2,
 )
 from astrofetch.moon.granules import M3, GranuleDataset, LROCNACRaw, LROCWACRaw
 from astrofetch.moon.layers import LAYERS, MOON, Body, Instrument, LayerSpec, Probe
@@ -40,4 +42,6 @@ __all__ = [
     "ODEInstrumentDataset",
     "Probe",
     "SLDEM2015",
+    "WACGLD100",
+    "WACTiO2",
 ]

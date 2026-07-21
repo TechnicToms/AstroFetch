@@ -20,6 +20,7 @@ from astrofetch.moon.datasets import (
     LOLA,
     LROCNACDTM,
     SLDEM2015,
+    WACGLD100,
     DivinerGDR,
     KaguyaTC,
     KaguyaTCImagery,
@@ -28,6 +29,7 @@ from astrofetch.moon.datasets import (
     MosaicAsset,
     ODEAsset,
     Product,
+    WACTiO2,
     _ProductDataset,
 )
 from astrofetch.moon.granules import M3, GranuleDataset, LROCNACRaw, LROCWACRaw
@@ -162,6 +164,8 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(MiniRF, "oc"),
         _spec(DivinerGDR, "rock_abundance"),
         _spec(DivinerGDR, "regolith_temp"),
+        _spec(WACGLD100, "dtm"),
+        _spec(WACTiO2, "tio2"),
     )
 }
 
@@ -194,6 +198,8 @@ MOON = Body(
                 "sldem2015": _instrument(SLDEM2015),
                 "minirf": _instrument(MiniRF),
                 "diviner": _instrument(DivinerGDR),
+                "wac_gld100": _instrument(WACGLD100),
+                "wac_tio2": _instrument(WACTiO2),
             },
             granules={
                 "nac_raw": LROCNACRaw,

@@ -581,3 +581,21 @@ def test_catalog_includes_diviner() -> None:
     spec = LAYERS["lro_diviner_rock_abundance"]
     assert spec.source == "ode"
     assert spec.pt == "GDR_L3"
+
+
+def test_wac_gld100_pattern_selects_only_the_100m_family() -> None:
+    files = _phase_c_files("LRO/LROC/SDWDTM")
+    spec = af.WACGLD100.all_products["dtm"]
+    urls = ode.match_files(files, spec.pattern, spec.file_type)
+    assert len(urls) == 2
+    assert all(u.upper().endswith("_100M.IMG") for u in urls)
+    assert not any("CSHADE" in u.upper() for u in urls)
+
+
+def test_wac_tio2_pattern_selects_the_data_file() -> None:
+    _assert_pattern_selects(af.WACTiO2.all_products["tio2"], "LRO/LROC/SDWTIO", "E350N0450.IMG")
+
+
+def test_catalog_includes_wac_gld100_and_tio2() -> None:
+    assert MOON.probes["lro"].instruments["wac_gld100"].dataset is af.WACGLD100
+    assert MOON.probes["lro"].instruments["wac_tio2"].dataset is af.WACTiO2

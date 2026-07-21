@@ -641,6 +641,51 @@ class DivinerGDR(ODEInstrumentDataset):
     }
 
 
+class WACGLD100(ODEInstrumentDataset):
+    """LRO LROC WAC GLD100 global DTM, 100 m/px, searched via PDS ODE
+    (product type ``SDWDTM``): 8 near-global quadrant tiles plus 2 polar
+    caps, pinned to their 100 m native resolution (coarser 128/256 px-per-
+    degree copies of the same tiles, and one separate whole-globe file at
+    even coarser multi-resolution, both exist under the same product type
+    and are excluded by the pattern). The same product type is dominated by
+    ``WAC_CSHADE`` shaded-relief products (a rendered visualization, AGENTS
+    rule 3, and far more numerous than GLD100 itself), so ``product_id``
+    narrows the ODE search server-side rather than relying on the filename
+    pattern alone (verified live 2026-07-21). im-ldi PDS4 archive: opens the
+    data ``.IMG`` file directly, never its ``.xml`` label (rule 1's
+    PDS4-label lesson).
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "LROC WAC GLD100 (global DTM)"
+    ihid = "LRO"
+    iid = "LROC"
+    all_products = {
+        "dtm": ODEAsset(
+            "lroc_wac_gld100_dtm",
+            "SDWDTM",
+            r"WAC_GLD100_.+_100M\.IMG",
+            product_id="*wac_gld100*",
+        ),
+    }
+
+
+class WACTiO2(ODEInstrumentDataset):
+    """LRO LROC WAC TiO2 abundance map, searched via PDS ODE (product type
+    ``SDWTIO``), weight-percent TiO2 in the regolith derived from WAC
+    multispectral photometry. im-ldi PDS4 archive: opens the data ``.IMG``
+    file directly, never its ``.xml`` label (rule 1's PDS4-label lesson).
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "LROC WAC TiO2 abundance"
+    ihid = "LRO"
+    iid = "LROC"
+    all_products = {
+        "tio2": ODEAsset("lroc_wac_tio2", "SDWTIO", r"WAC_TIO2_.+\.IMG"),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 

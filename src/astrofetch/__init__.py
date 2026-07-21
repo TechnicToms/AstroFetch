@@ -12,6 +12,7 @@ from astrofetch.moon import (
     M3,
     MOON,
     SLDEM2015,
+    WACGLD100,
     DivinerGDR,
     IntersectionDataset,
     KaguyaTC,
@@ -20,6 +21,7 @@ from astrofetch.moon import (
     LROCWACMosaic,
     LROCWACRaw,
     MiniRF,
+    WACTiO2,
 )
 
 __version__ = "0.1.0"
@@ -38,6 +40,8 @@ __all__ = [
     "LROCWACRaw",
     "MiniRF",
     "SLDEM2015",
+    "WACGLD100",
+    "WACTiO2",
     "moon",
     "__version__",
 ]
