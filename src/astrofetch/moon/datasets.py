@@ -766,6 +766,41 @@ class LROCNACROI(ODEInstrumentDataset):
     }
 
 
+class ShadowCam(ODEInstrumentDataset):
+    """KPLO ShadowCam controlled mosaics and stereo DTMs of permanently
+    shadowed regions near the lunar poles, searched via PDS ODE (product
+    types ``CMOS`` and ``DTM``). ``footprint_sampling`` is on by default:
+    coverage is a handful of named PSR (permanently shadowed region) sites,
+    not the whole Moon.
+
+    Genuine Cloud Optimized GeoTIFFs (unlike the LROC im-ldi archive, no
+    PDS4-label quirk to work around). The DTM product type also carries
+    rendered slope/shaded-relief/color visualizations (excluded per rule 3);
+    ``confidence`` is the one non-elevation product offered, and is typed
+    ``"Referenced"`` rather than ``"Product"`` in ODE (verified live
+    2026-07-21). Sites are near-polar, so windows reprojected onto the
+    geographic target grid see the same equirectangular-near-the-pole
+    distortion as any other source there today (see :mod:`astrofetch.data.grid`);
+    a dedicated polar target grid remains future work.
+    """
+
+    probe = "Korea Pathfinder Lunar Orbiter"
+    instrument = "ShadowCam (PSR mosaics and DTMs)"
+    ihid = "KPLO"
+    iid = "ShadowCam"
+    footprint_sampling = True
+    all_products = {
+        "mosaic": ODEAsset("shadowcam_mosaic", "CMOS", r"SHADOWCAM_CMOSAIC_.+_COG\.TIF"),
+        "dtm": ODEAsset("shadowcam_dtm", "DTM", r"SHADOWCAM_DTM_.+_DTM_\d+M_COG\.TIF"),
+        "confidence": ODEAsset(
+            "shadowcam_confidence",
+            "DTM",
+            r"SHADOWCAM_DTM_.+_CONFIDENCE_COG\.TIF",
+            file_type="Referenced",
+        ),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 

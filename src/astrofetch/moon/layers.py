@@ -32,6 +32,7 @@ from astrofetch.moon.datasets import (
     MosaicAsset,
     ODEAsset,
     Product,
+    ShadowCam,
     WACTiO2,
     _ProductDataset,
 )
@@ -179,6 +180,9 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(LROCWACColor, "refl_689nm"),
         _spec(LROCNACROI, "mosaic_5m"),
         _spec(LROCNACROI, "mosaic_20m"),
+        _spec(ShadowCam, "mosaic"),
+        _spec(ShadowCam, "dtm"),
+        _spec(ShadowCam, "confidence"),
     )
 }
 
@@ -226,6 +230,12 @@ MOON = Body(
             name=M3.probe,
             instruments={},
             granules={"m3": M3},
+        ),
+        "kplo": Probe(
+            name=ShadowCam.probe,
+            instruments={
+                "shadowcam": _instrument(ShadowCam),
+            },
         ),
     },
 )

@@ -651,3 +651,35 @@ def test_nac_roi_uses_footprint_sampling() -> None:
 
 def test_catalog_includes_nac_roi() -> None:
     assert MOON.probes["lro"].instruments["nac_roi"].dataset is af.LROCNACROI
+
+
+def test_shadowcam_mosaic_pattern_selects_the_cog() -> None:
+    _assert_pattern_selects(
+        af.ShadowCam.all_products["mosaic"],
+        "KPLO/ShadowCam/CMOS",
+        "summer_04pm_cog.tif",
+    )
+
+
+def test_shadowcam_dtm_pattern_excludes_rendered_products() -> None:
+    _assert_pattern_selects(
+        af.ShadowCam.all_products["dtm"], "KPLO/ShadowCam/DTM", "p847s3110_dtm_6m_cog.tif"
+    )
+
+
+def test_shadowcam_confidence_uses_referenced_file_type() -> None:
+    spec = af.ShadowCam.all_products["confidence"]
+    assert spec.file_type == "Referenced"
+    _assert_pattern_selects(spec, "KPLO/ShadowCam/DTM", "p847s3110_confidence_cog.tif")
+
+
+def test_shadowcam_uses_footprint_sampling() -> None:
+    assert af.ShadowCam.footprint_sampling is True
+
+
+def test_catalog_includes_shadowcam() -> None:
+    assert MOON.probes["kplo"].instruments["shadowcam"].dataset is af.ShadowCam
+    spec = LAYERS["shadowcam_mosaic"]
+    assert spec.ihid == "KPLO"
+    assert spec.iid == "ShadowCam"
+    assert spec.pt == "CMOS"

@@ -17,6 +17,7 @@ from astrofetch.moon.datasets import (
     MiniRF,
     MosaicDataset,
     ODEInstrumentDataset,
+    ShadowCam,
     WACTiO2,
 )
 from astrofetch.moon.granules import M3, GranuleDataset, LROCNACRaw, LROCWACRaw
@@ -48,6 +49,7 @@ __all__ = [
     "ODEInstrumentDataset",
     "Probe",
     "SLDEM2015",
+    "ShadowCam",
     "WACGLD100",
     "WACTiO2",
 ]

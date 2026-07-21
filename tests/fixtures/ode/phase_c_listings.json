@@ -50,5 +50,17 @@
     {"FileName": "NAC_ROI_AITKNCTRHIA_E168S1734_5M.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_ROI/NAC_ROI/NAC_ROI_AITKNCTRHIA_E168S1734_5M.IMG"},
     {"FileName": "NAC_ROI_AITKNCTRHIA_E168S1734_20M.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_ROI/NAC_ROI/NAC_ROI_AITKNCTRHIA_E168S1734_20M.IMG"},
     {"FileName": "WAC_ROI_FARSIDE_DUSK_E000N1800_004P.IMG", "Type": "Product", "URL": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_ROI/WAC_ROI_FARSIDE_DUSK/WAC_ROI_FARSIDE_DUSK_E000N1800_004P.IMG"}
+  ],
+  "KPLO/ShadowCam/CMOS": [
+    {"FileName": "SHADOWCAM_CMOSAIC_FAUSTINI04_P871S0833_SUMMER_04PM.CUB", "Type": "Product", "URL": "https://pds.shadowcam.im-ldi.com/derived/cmosaic/faustini04/shadowcam_cmosaic_faustini04_p871s0833_summer_04pm.cub"},
+    {"FileName": "SHADOWCAM_CMOSAIC_FAUSTINI04_P871S0833_SUMMER_04PM_COG.TIF", "Type": "Product", "URL": "https://pds.shadowcam.im-ldi.com/derived/cmosaic/faustini04/shadowcam_cmosaic_faustini04_p871s0833_summer_04pm_cog.tif"},
+    {"FileName": "SHADOWCAM_CMOSAIC_FAUSTINI04_P871S0833_SUMMER_04PM_RESIDUALS.PNG", "Type": "Browse", "URL": "https://pds.shadowcam.im-ldi.com/derived/cmosaic/faustini04/shadowcam_cmosaic_faustini04_p871s0833_summer_04pm_residuals.png"}
+  ],
+  "KPLO/ShadowCam/DTM": [
+    {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_DTM_6M.CUB", "Type": "Product", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_dtm_6m.cub"},
+    {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_DTM_6M_COG.TIF", "Type": "Product", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_dtm_6m_cog.tif"},
+    {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_CONFIDENCE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_confidence_cog.tif"},
+    {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_SLOPE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_slope_cog.tif"},
+    {"FileName": "SHADOWCAM_DTM_LCROSS1_P847S3110_COLOR-SLOPE_COG.TIF", "Type": "Referenced", "URL": "https://pds.shadowcam.im-ldi.com/derived/dtm/lcross1/shadowcam_dtm_lcross1_p847s3110_color-slope_cog.tif"}
   ]
 }

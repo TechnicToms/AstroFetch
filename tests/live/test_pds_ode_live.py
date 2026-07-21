@@ -225,6 +225,22 @@ def test_nac_roi_fetches_a_real_patch(tmp_path: Path) -> None:
 
 
 @pytest.mark.live
+def test_shadowcam_fetches_a_real_patch(tmp_path: Path) -> None:
+    """ShadowCam: footprint-constrained sampling over a PSR site mosaic."""
+    moondata = af.ShadowCam(
+        products=["mosaic"],
+        resolution=5.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+
+
+@pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
     dataset = af.LROCNACRaw(bbox=_APOLLO15_AREA, max_products=1, rows=slice(0, 64))

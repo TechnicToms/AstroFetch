@@ -24,6 +24,7 @@ from astrofetch.moon import (
     LROCWACMosaic,
     LROCWACRaw,
     MiniRF,
+    ShadowCam,
     WACTiO2,
 )
 
@@ -46,6 +47,7 @@ __all__ = [
     "LROCWACRaw",
     "MiniRF",
     "SLDEM2015",
+    "ShadowCam",
     "WACGLD100",
     "WACTiO2",
     "moon",
