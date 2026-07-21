@@ -2,19 +2,38 @@
 
 One dataset class per instrument; combine them with ``&`` to receive
 coregistered multichannel samples. AstroFetch is a thin layer over existing
-archive tooling (STAC, COGs), never a mirror.
+archive tooling (STAC, COGs, PDS ODE), never a mirror of any archive.
 """
 
 from astrofetch import moon
-from astrofetch.moon import MOON, IntersectionDataset, KaguyaTC, KaguyaTCImagery
+from astrofetch.moon import (
+    LOLA,
+    LROCNACDTM,
+    M3,
+    MOON,
+    SLDEM2015,
+    IntersectionDataset,
+    KaguyaTC,
+    KaguyaTCImagery,
+    LROCNACRaw,
+    LROCWACMosaic,
+    LROCWACRaw,
+)
 
 __version__ = "0.1.0"
 
 __all__ = [
+    "LOLA",
     "MOON",
+    "M3",
     "IntersectionDataset",
     "KaguyaTC",
     "KaguyaTCImagery",
+    "LROCNACDTM",
+    "LROCNACRaw",
+    "LROCWACMosaic",
+    "LROCWACRaw",
+    "SLDEM2015",
     "moon",
     "__version__",
 ]
