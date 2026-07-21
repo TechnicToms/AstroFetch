@@ -3,6 +3,7 @@
 from astrofetch.moon.datasets import (
     LOLA,
     LROCNACDTM,
+    LROCNACROI,
     SLDEM2015,
     WACGLD100,
     DivinerGDR,
@@ -35,6 +36,7 @@ __all__ = [
     "KaguyaTC",
     "KaguyaTCImagery",
     "LROCNACDTM",
+    "LROCNACROI",
     "LROCNACRaw",
     "LROCWACColor",
     "LROCWACGlobal",

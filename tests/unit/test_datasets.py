@@ -624,3 +624,30 @@ def test_wac_color_does_not_offer_the_3band_composite() -> None:
 def test_catalog_includes_wac_global_and_color() -> None:
     assert MOON.probes["lro"].instruments["wac_global_tiled"].dataset is af.LROCWACGlobal
     assert MOON.probes["lro"].instruments["wac_color"].dataset is af.LROCWACColor
+
+
+def test_nac_roi_patterns_select_nac_not_wac_and_the_right_resolution() -> None:
+    _assert_pattern_selects(
+        af.LROCNACROI.all_products["mosaic_5m"],
+        "LRO/LROC/BDRROI",
+        "AITKNCTRHIA_E168S1734_5M.IMG",
+    )
+    _assert_pattern_selects(
+        af.LROCNACROI.all_products["mosaic_20m"],
+        "LRO/LROC/BDRROI",
+        "AITKNCTRHIA_E168S1734_20M.IMG",
+    )
+
+
+def test_nac_roi_does_not_offer_the_native_resolution() -> None:
+    # Native-resolution NAC ROI mosaics can reach ~14 GB; too large for
+    # windowed reads (verified live 2026-07-21).
+    assert set(af.LROCNACROI.all_products) == {"mosaic_5m", "mosaic_20m"}
+
+
+def test_nac_roi_uses_footprint_sampling() -> None:
+    assert af.LROCNACROI.footprint_sampling is True
+
+
+def test_catalog_includes_nac_roi() -> None:
+    assert MOON.probes["lro"].instruments["nac_roi"].dataset is af.LROCNACROI

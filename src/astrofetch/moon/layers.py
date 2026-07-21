@@ -19,6 +19,7 @@ from astrofetch.moon.datasets import (
     CRS,
     LOLA,
     LROCNACDTM,
+    LROCNACROI,
     SLDEM2015,
     WACGLD100,
     DivinerGDR,
@@ -176,6 +177,8 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(LROCWACColor, "refl_604nm"),
         _spec(LROCWACColor, "refl_643nm"),
         _spec(LROCWACColor, "refl_689nm"),
+        _spec(LROCNACROI, "mosaic_5m"),
+        _spec(LROCNACROI, "mosaic_20m"),
     )
 }
 
@@ -212,6 +215,7 @@ MOON = Body(
                 "wac_tio2": _instrument(WACTiO2),
                 "wac_global_tiled": _instrument(LROCWACGlobal),
                 "wac_color": _instrument(LROCWACColor),
+                "nac_roi": _instrument(LROCNACROI),
             },
             granules={
                 "nac_raw": LROCNACRaw,

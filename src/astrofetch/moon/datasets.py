@@ -738,6 +738,34 @@ class LROCWACColor(ODEInstrumentDataset):
     }
 
 
+class LROCNACROI(ODEInstrumentDataset):
+    """LRO LROC NAC region-of-interest mosaics: named sites (craters, poles,
+    other features), searched via PDS ODE (product type ``BDRROI``).
+    ``footprint_sampling`` is on by default, matching :class:`LROCNACDTM`:
+    coverage is a few hundred named sites, not the whole Moon.
+
+    Each site's native-resolution mosaic can reach ~14 GB (verified live
+    2026-07-21), unreasonable for windowed reads, so only the downsampled
+    5 m and 20 m products are offered. The same product type also carries
+    unrelated ``WAC_ROI`` mosaics from the WAC camera; ``product_id``
+    narrows the ODE search to the NAC family.
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "LROC NAC region-of-interest mosaics"
+    ihid = "LRO"
+    iid = "LROC"
+    footprint_sampling = True
+    all_products = {
+        "mosaic_5m": ODEAsset(
+            "lroc_nac_roi_5m", "BDRROI", r"NAC_ROI_.+_5M\.IMG", product_id="*nac_roi*"
+        ),
+        "mosaic_20m": ODEAsset(
+            "lroc_nac_roi_20m", "BDRROI", r"NAC_ROI_.+_20M\.IMG", product_id="*nac_roi*"
+        ),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 
