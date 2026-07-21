@@ -1,0 +1,11 @@
+{
+  "LRO/MRFLRO/MOSDDR": [
+    {"FileName": "GLOBAL_CPR_128PPD_SIMP_0C.IMG", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.img"},
+    {"FileName": "GLOBAL_CPR_128PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.lbl"},
+    {"FileName": "GLOBAL_CPR_128PPD_SIMP_0C.XML", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_cpr_128ppd_simp_0c.xml"},
+    {"FileName": "GLOBAL_CPR_32PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/32ppd/global_cpr_32ppd_simp_0c.lbl"},
+    {"FileName": "GLOBAL_SC_128PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_sc_128ppd_simp_0c.lbl"},
+    {"FileName": "GLOBAL_OC_128PPD_SIMP_0C.LBL", "Type": "Product", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/data/128ppd/global_oc_128ppd_simp_0c.lbl"},
+    {"FileName": "GLOBAL_CPR_SIMP_0C_BR.PNG", "Type": "Browse", "URL": "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/lromrf_1001/browse/global_cpr_simp_0c_br.png"}
+  ]
+}

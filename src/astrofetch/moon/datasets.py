@@ -541,6 +541,44 @@ class SLDEM2015(MosaicDataset):
     all_products = {"dem": MosaicAsset("sldem2015_dem", endpoints.SLDEM2015_URL)}
 
 
+_MINIRF_NODATA = -3.4028226550889045e38
+"""Mini-RF global mosaics declare ``MISSING_CONSTANT = -1.7976931E+308`` (a
+float64 sentinel) in a float32 band; GDAL's overflowing cast of that constant
+into the band's dtype leaves ``src.nodata`` unset (rather than raising), and
+out-of-coverage pixels read back as this specific overflow artifact -- not
+even the standard float32 minimum -- marked "valid" (verified live
+2026-07-21 by reading raw pixels directly and inspecting the exact bit
+pattern; same class of issue as the LROCNACDTM PDS4-label bug -- rule 1)."""
+
+
+class MiniRF(ODEInstrumentDataset):
+    """LRO Mini-RF S-band bistatic radar global mosaics, 128 px/degree,
+    searched via PDS ODE (product type ``MOSDDR``): circular polarization
+    ratio, and same- and opposite-sense circular received power.
+
+    Each product is itself a single global mosaic (detached PDS3 label, same
+    read path as :class:`LOLA`); ODE is still searched rather than reading a
+    fixed URL, matching the rest of the ODE-backed roster. Verified live
+    2026-07-21.
+    """
+
+    probe = "Lunar Reconnaissance Orbiter"
+    instrument = "Mini-RF (S-band radar mosaics)"
+    ihid = "LRO"
+    iid = "MRFLRO"
+    all_products = {
+        "cpr": ODEAsset(
+            "lro_minirf_cpr", "MOSDDR", r"GLOBAL_CPR_128PPD_SIMP_0C\.LBL", nodata=_MINIRF_NODATA
+        ),
+        "sc": ODEAsset(
+            "lro_minirf_sc", "MOSDDR", r"GLOBAL_SC_128PPD_SIMP_0C\.LBL", nodata=_MINIRF_NODATA
+        ),
+        "oc": ODEAsset(
+            "lro_minirf_oc", "MOSDDR", r"GLOBAL_OC_128PPD_SIMP_0C\.LBL", nodata=_MINIRF_NODATA
+        ),
+    }
+
+
 class IntersectionDataset(_WindowedDataset):
     """Coregistered channel stack of two datasets over their overlap.
 

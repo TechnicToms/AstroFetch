@@ -18,6 +18,7 @@ from astrofetch.moon import (
     LROCNACRaw,
     LROCWACMosaic,
     LROCWACRaw,
+    MiniRF,
 )
 
 __version__ = "0.1.0"
@@ -33,6 +34,7 @@ __all__ = [
     "LROCNACRaw",
     "LROCWACMosaic",
     "LROCWACRaw",
+    "MiniRF",
     "SLDEM2015",
     "moon",
     "__version__",

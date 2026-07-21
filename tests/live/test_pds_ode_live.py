@@ -95,6 +95,25 @@ def test_sldem2015_fetches_a_real_patch(tmp_path: Path) -> None:
 
 
 @pytest.mark.live
+def test_minirf_fetches_a_real_patch(tmp_path: Path) -> None:
+    """Mini-RF global CPR mosaic: detached PDS3 label read via PDS ODE search."""
+    moondata = af.MiniRF(
+        products=["cpr"],
+        bbox=(23.0, 18.0, 25.0, 20.0),
+        resolution=500.0,
+        patch_size=32,
+        length=1,
+        seed=1,
+        cache=WindowCache(tmp_path),
+    )
+    sample = next(iter(moondata))
+    assert sample["image"].shape == (1, 32, 32)
+    assert bool(sample["mask"].any())
+    valid = sample["image"][sample["mask"]]
+    assert bool((valid >= 0.0).all()) and bool((valid <= 3.0).all())
+
+
+@pytest.mark.live
 def test_nac_raw_granule_reads_a_row_slice() -> None:
     """EXPERIMENTAL granule path: PDS4 raw NAC strip, partial row read."""
     dataset = af.LROCNACRaw(bbox=_APOLLO15_AREA, max_products=1, rows=slice(0, 64))

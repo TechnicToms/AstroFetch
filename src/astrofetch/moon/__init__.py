@@ -9,6 +9,7 @@ from astrofetch.moon.datasets import (
     KaguyaTC,
     KaguyaTCImagery,
     LROCWACMosaic,
+    MiniRF,
     MosaicDataset,
     ODEInstrumentDataset,
 )
@@ -32,6 +33,7 @@ __all__ = [
     "LROCWACMosaic",
     "LROCWACRaw",
     "LayerSpec",
+    "MiniRF",
     "MosaicDataset",
     "ODEInstrumentDataset",
     "Probe",

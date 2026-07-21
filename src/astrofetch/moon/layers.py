@@ -23,6 +23,7 @@ from astrofetch.moon.datasets import (
     KaguyaTC,
     KaguyaTCImagery,
     LROCWACMosaic,
+    MiniRF,
     MosaicAsset,
     ODEAsset,
     Product,
@@ -150,6 +151,9 @@ LAYERS: dict[str, LayerSpec] = {
         _spec(LROCWACMosaic, "morphology"),
         _spec(LOLA, "dem"),
         _spec(SLDEM2015, "dem"),
+        _spec(MiniRF, "cpr"),
+        _spec(MiniRF, "sc"),
+        _spec(MiniRF, "oc"),
     )
 }
 
@@ -180,6 +184,7 @@ MOON = Body(
                 "wac_mosaic": _instrument(LROCWACMosaic),
                 "lola": _instrument(LOLA),
                 "sldem2015": _instrument(SLDEM2015),
+                "minirf": _instrument(MiniRF),
             },
             granules={
                 "nac_raw": LROCNACRaw,

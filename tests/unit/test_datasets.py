@@ -9,6 +9,7 @@ layer wiring, reproducibility, and composition.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -17,10 +18,25 @@ import torch
 from torch.utils.data import DataLoader
 
 import astrofetch as af
+from astrofetch.data import ode
 from astrofetch.moon import LAYERS, MOON
 from astrofetch.moon import datasets as ds
 
 SAMPLE_KEYS = {"image", "mask", "layers", "bbox", "crs", "resolution"}
+
+_FIXTURES = Path(__file__).parent.parent / "fixtures" / "ode"
+
+
+def _phase_c_files(pt_key: str) -> tuple[ode.ODEFile, ...]:
+    raw = json.loads((_FIXTURES / "phase_c_listings.json").read_text())[pt_key]
+    return tuple(ode.ODEFile(f["FileName"], f["Type"], f["URL"]) for f in raw)
+
+
+def _assert_pattern_selects(spec: ds.ODEAsset, pt_key: str, expected_suffix: str) -> None:
+    files = _phase_c_files(pt_key)
+    urls = ode.match_files(files, spec.pattern, spec.file_type)
+    assert len(urls) == 1, f"{spec.layer}: expected exactly one match, got {urls}"
+    assert urls[0].endswith(expected_suffix)
 
 
 def _fake_find_asset_hrefs(
@@ -481,3 +497,35 @@ def test_registry_marks_stac_layers_with_source() -> None:
 
 def test_registry_carries_ode_asset_file_type() -> None:
     assert LAYERS["lroc_nac_dtm"].file_type == "Product"
+
+
+# --- Phase C: wider PDS ODE roster ----------------------------------------
+
+
+def test_minirf_patterns_select_the_right_global_mosaic() -> None:
+    _assert_pattern_selects(
+        af.MiniRF.all_products["cpr"], "LRO/MRFLRO/MOSDDR", "128ppd_simp_0c.lbl"
+    )
+    _assert_pattern_selects(
+        af.MiniRF.all_products["sc"], "LRO/MRFLRO/MOSDDR", "global_sc_128ppd_simp_0c.lbl"
+    )
+    _assert_pattern_selects(
+        af.MiniRF.all_products["oc"], "LRO/MRFLRO/MOSDDR", "global_oc_128ppd_simp_0c.lbl"
+    )
+
+
+def test_minirf_yields_sample_dicts() -> None:
+    moondata = af.MiniRF(products=["cpr", "sc"], patch_size=16, length=1, seed=0)
+    sample = moondata[0]
+    assert set(sample) == SAMPLE_KEYS
+    assert sample["layers"] == ["lro_minirf_cpr", "lro_minirf_sc"]
+
+
+def test_catalog_includes_minirf() -> None:
+    assert MOON.probes["lro"].instruments["minirf"].dataset is af.MiniRF
+    spec = MOON.probes["lro"].instruments["minirf"].products["cpr"]
+    assert spec is LAYERS["lro_minirf_cpr"]
+    assert spec.source == "ode"
+    assert spec.ihid == "LRO"
+    assert spec.iid == "MRFLRO"
+    assert spec.pt == "MOSDDR"
