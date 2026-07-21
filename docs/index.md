@@ -46,9 +46,11 @@ for batch in loader:
 
 ## Beyond the STAC catalog
 
-Some instruments (LROC, LOLA, ...) aren't in the USGS ARD STAC catalog at
-all; those datasets search the NASA PDS Orbital Data Explorer instead, or
-read a single fixed mosaic URL, behind the exact same interface:
+Some instruments (LROC, LOLA, Mini-RF, Diviner, ShadowCam, Clementine, ...)
+aren't in the USGS ARD STAC catalog at all; those datasets search the NASA
+PDS Orbital Data Explorer instead, or read a single fixed mosaic URL, behind
+the exact same interface. The full roster is in
+[Instrument datasets](reference/datasets.md); two examples:
 
 ```python
 import astrofetch as af
@@ -60,6 +62,10 @@ sample = nac[0]
 
 # A global 100 m WAC mosaic and a global LOLA DEM, channel-stacked with `&`.
 terrain = af.LROCWACMosaic(resolution=100) & af.LOLA(resolution=100)
+
+# ShadowCam mosaics of permanently shadowed polar craters, another
+# site-based instrument -- footprint sampling applies the same way.
+shadowcam = af.ShadowCam(products=["mosaic"])
 ```
 
 ## Discovering what data exists

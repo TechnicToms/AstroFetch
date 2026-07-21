@@ -14,12 +14,17 @@ this page is the short version.
 **Current phase: Phase 2.** `InstrumentDataset.read(bbox)` fetches real COGs
 from the USGS ARD catalog, reprojects them onto a common geographic grid,
 applies scale/offset, mosaics overlapping items, and caches the result — the
-Phase 1 exit criterion. Phase 2 has started delivering new data sources
-beyond STAC: the NASA PDS Orbital Data Explorer (`ODEInstrumentDataset`) adds
-LROC NAC stereo DTM sites, and fixed-URL mosaics (`MosaicDataset`) add the
-LRO WAC global mosaic and the LOLA and SLDEM2015 global DEMs — all behind
-the same sample-dict contract and `&` composition as the STAC-backed
-datasets. An experimental, separately-contracted raw-granule path
+Phase 1 exit criterion. Phase 2 has delivered new data sources beyond STAC:
+the NASA PDS Orbital Data Explorer (`ODEInstrumentDataset`) now backs a wide
+roster of instruments — LROC NAC stereo DTM sites and region-of-interest
+mosaics, Mini-RF S-band radar, Diviner rock abundance and regolith
+temperature, WAC GLD100, TiO2, tiled global morphology, and 7-color
+reflectance, ShadowCam polar mosaics and DTMs, and the Clementine UVVIS and
+NIR basemaps — and fixed-URL mosaics (`MosaicDataset`) add the LRO WAC
+global mosaic and the LOLA and SLDEM2015 global DEMs, all behind the same
+sample-dict contract and `&` composition as the STAC-backed datasets. See
+[Instrument datasets](reference/datasets.md) for the full list. An
+experimental, separately-contracted raw-granule path
 (`astrofetch.moon.granules`) also now exists for camera-geometry NAC/WAC
 strips and M3 radiance cubes; see [Raw granules](reference/granules.md).
 Still open for Phase 2: `GridTileDataset`, spatial-autocorrelation-aware

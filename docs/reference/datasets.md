@@ -26,6 +26,30 @@ contract, not part of the windowed-dataset family below.
 
 ::: astrofetch.moon.datasets.SLDEM2015
 
+::: astrofetch.moon.datasets.MiniRF
+
+::: astrofetch.moon.datasets.DivinerGDR
+
+::: astrofetch.moon.datasets.WACGLD100
+
+::: astrofetch.moon.datasets.WACTiO2
+
+::: astrofetch.moon.datasets.LROCWACGlobal
+
+::: astrofetch.moon.datasets.LROCWACColor
+
+::: astrofetch.moon.datasets.LROCNACROI
+
+## Korea Pathfinder Lunar Orbiter
+
+::: astrofetch.moon.datasets.ShadowCam
+
+## Clementine
+
+::: astrofetch.moon.datasets.ClementineUVVIS
+
+::: astrofetch.moon.datasets.ClementineNIR
+
 ## Base classes
 
 ::: astrofetch.moon.datasets.InstrumentDataset
