@@ -67,6 +67,10 @@ class ODEAsset(NamedTuple):
     pattern: str
     band: int = 1
     nodata: float | None = None
+    file_type: str = "Product"
+    """Required ODE file role for ``pattern`` to match against. Almost every
+    product's actual data file is typed ``"Product"``; a few (e.g. ShadowCam
+    DTM confidence maps) ship their data under ``"Referenced"`` instead."""
 
 
 class MosaicAsset(NamedTuple):
@@ -357,7 +361,7 @@ class ODEInstrumentDataset(_ProductDataset):
     def _hrefs(self, spec: Product | ODEAsset | MosaicAsset, bbox: BBox) -> list[str]:
         assert isinstance(spec, ODEAsset)
         return ode.find_file_urls(
-            self.ihid, self.iid, spec.pt, spec.pattern, bbox, self.max_products
+            self.ihid, self.iid, spec.pt, spec.pattern, bbox, self.max_products, spec.file_type
         )
 
     def _sample_bbox(self, index: int) -> BBox:

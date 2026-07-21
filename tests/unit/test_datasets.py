@@ -303,6 +303,31 @@ def test_ode_read_queries_ode_by_ihid_iid_pt(monkeypatch: pytest.MonkeyPatch) ->
     assert calls == [("LRO", "LROC", "SDNDTM")]
 
 
+def test_ode_asset_file_type_defaults_to_product() -> None:
+    assert ds.ODEAsset("layer", "PT", r".+").file_type == "Product"
+
+
+def test_ode_read_passes_asset_file_type(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[str] = []
+
+    def _spy(ihid, iid, pt, pattern, bbox, max_products=20, file_type="Product", root=None):
+        seen.append(file_type)
+        return [f"{ihid}|{iid}|{pt}"]
+
+    class _Referenced(ds.ODEInstrumentDataset):
+        probe = "Test Probe"
+        instrument = "Test Instrument"
+        ihid = "X"
+        iid = "Y"
+        all_products = {
+            "data": ds.ODEAsset("test_layer", "PT", r".+", file_type="Referenced"),
+        }
+
+    monkeypatch.setattr(ds.ode, "find_file_urls", _spy)
+    next(iter(_Referenced(products=["data"], patch_size=8, length=1, seed=0)))
+    assert seen == ["Referenced"]
+
+
 def test_ode_dataset_default_products_is_quantitative_only() -> None:
     # Slope/shade are rendered visualizations (AGENTS rule 3); only
     # elevation, orthoimage, and confidence are offered.
@@ -452,3 +477,7 @@ def test_registry_agrees_for_mosaic_layer() -> None:
 
 def test_registry_marks_stac_layers_with_source() -> None:
     assert LAYERS["kaguya_tc_dtm"].source == "stac"
+
+
+def test_registry_carries_ode_asset_file_type() -> None:
+    assert LAYERS["lroc_nac_dtm"].file_type == "Product"

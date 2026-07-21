@@ -69,6 +69,10 @@ class LayerSpec:
     """Filename pattern selecting the file within an ODE product
     (``source == "ode"``)."""
 
+    file_type: str = ""
+    """Required ODE file role for ``pattern`` to match against
+    (``source == "ode"``); almost always ``"Product"``."""
+
     href: str = ""
     """Fixed archive URL (``source == "mosaic"``)."""
 
@@ -127,6 +131,7 @@ def _spec(dataset: type[_ProductDataset], product: str) -> LayerSpec:
             iid=iid,
             pt=entry.pt,
             pattern=entry.pattern,
+            file_type=entry.file_type,
         )
     if isinstance(entry, MosaicAsset):
         return LayerSpec(**common, source="mosaic", href=entry.href)
