@@ -1,9 +1,10 @@
 """Unit tests for the instrument datasets.
 
-The read path is real (STAC search + COG reproject + cache), so these tests
-stub :mod:`astrofetch.data.stac` and :mod:`astrofetch.data.raster` — no network,
-no real COGs — and redirect the cache to a temp dir. A deterministic fake read
-lets us assert shapes, layer wiring, reproducibility, and composition.
+The read path is real (STAC/ODE search + raster reproject + cache), so these
+tests stub :mod:`astrofetch.data.stac`, :mod:`astrofetch.data.ode`, and
+:mod:`astrofetch.data.raster` — no network, no real rasters — and redirect
+the cache to a temp dir. A deterministic fake read lets us assert shapes,
+layer wiring, reproducibility, and composition.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ def _fake_find_asset_hrefs(
     return [f"{collection}|{asset}"]
 
 
-def _fake_read_window(href, grid, band=1, resampling=None):
+def _fake_read_window(href, grid, band=1, resampling=None, nodata_override=None):
     # Deterministic in (href, window): identical requests read identical data,
     # which is what makes seeded sampling reproducible under mocking.
     value = float(hash((href, grid.bbox)) % 997)
@@ -36,11 +37,34 @@ def _fake_read_window(href, grid, band=1, resampling=None):
     return image, np.ones((grid.height, grid.width), dtype=bool)
 
 
+def _fake_find_file_urls(
+    ihid: str,
+    iid: str,
+    pt: str,
+    pattern: str,
+    bbox: tuple,
+    max_products: int = 20,
+    file_type: str | None = "Product",
+    root: str | None = None,
+) -> list[str]:
+    return [f"{ihid}|{iid}|{pt}"]
+
+
+def _fake_query_products(
+    ihid: str, iid: str, pt: str, bbox: tuple, max_products: int = 20, root: str | None = None
+) -> list:
+    # No footprints by default: exercises the uniform-sampling fallback unless
+    # a test overrides this to supply real footprints.
+    return []
+
+
 @pytest.fixture(autouse=True)
 def _mock_reads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("ASTROFETCH_CACHE", str(tmp_path / "cache"))
     monkeypatch.setattr(ds.stac, "find_asset_hrefs", _fake_find_asset_hrefs)
     monkeypatch.setattr(ds.raster, "read_window", _fake_read_window)
+    monkeypatch.setattr(ds.ode, "find_file_urls", _fake_find_file_urls)
+    monkeypatch.setattr(ds.ode, "query_products", _fake_query_products)
 
 
 def test_instrument_yields_sample_dicts() -> None:
@@ -193,7 +217,7 @@ def test_catalog_and_registry_agree() -> None:
 def test_mosaic_prefers_earlier_items_and_fills_gaps(monkeypatch: pytest.MonkeyPatch) -> None:
     from astrofetch.data.grid import TargetGrid
 
-    def _coverage(href, grid, band=1, resampling=None):
+    def _coverage(href, grid, band=1, resampling=None, nodata_override=None):
         image = np.full((grid.height, grid.width), float(href[-1]), dtype=np.float32)
         mask = np.zeros((grid.height, grid.width), dtype=bool)
         if href.endswith("1"):  # first item covers only the left half
@@ -220,3 +244,211 @@ def test_mosaic_with_no_items_is_all_invalid() -> None:
     image, mask = ds._mosaic([], grid)
     assert not mask.any()
     assert (image == 0.0).all()
+
+
+def test_mosaic_passes_band_and_nodata_override() -> None:
+    from astrofetch.data.grid import TargetGrid
+
+    seen: list[tuple[int, float | None]] = []
+
+    def _spy(href, grid, band=1, resampling=None, nodata_override=None):
+        seen.append((band, nodata_override))
+        shape = (grid.height, grid.width)
+        return np.zeros(shape, dtype=np.float32), np.ones(shape, dtype=bool)
+
+    grid = TargetGrid(bbox=(0.0, 0.0, 1.0, 1.0), width=4, height=4)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(ds.raster, "read_window", _spy)
+        ds._mosaic(["item"], grid, band=2, nodata_override=-999.0)
+    assert seen == [(2, -999.0)]
+
+
+# --- ODEInstrumentDataset -----------------------------------------------
+
+
+def test_ode_instrument_yields_sample_dicts() -> None:
+    moondata = af.LROCNACDTM(
+        products=["dtm", "ortho"],
+        bbox=(-60.0, 5.0, -55.0, 10.0),
+        patch_size=32,
+        length=3,
+        seed=0,
+        footprint_sampling=False,
+    )
+    samples = list(moondata)
+    assert len(samples) == 3
+    for sample in samples:
+        assert set(sample) == SAMPLE_KEYS
+        assert sample["image"].shape == (2, 32, 32)
+        assert sample["image"].dtype == torch.float32
+        assert sample["mask"].shape == (2, 32, 32)
+        assert sample["layers"] == ["lroc_nac_dtm", "lroc_nac_ortho"]
+
+
+def test_ode_read_queries_ode_by_ihid_iid_pt(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, str, str]] = []
+
+    def _spy(ihid, iid, pt, pattern, bbox, max_products=20, file_type="Product", root=None):
+        calls.append((ihid, iid, pt))
+        return [f"{ihid}|{iid}|{pt}"]
+
+    monkeypatch.setattr(ds.ode, "find_file_urls", _spy)
+    next(
+        iter(
+            af.LROCNACDTM(
+                products=["dtm"], patch_size=8, length=1, seed=0, footprint_sampling=False
+            )
+        )
+    )
+    assert calls == [("LRO", "LROC", "SDNDTM")]
+
+
+def test_ode_dataset_default_products_is_quantitative_only() -> None:
+    # Slope/shade are rendered visualizations (AGENTS rule 3); only
+    # elevation, orthoimage, and confidence are offered.
+    assert set(af.LROCNACDTM.all_products) == {"dtm", "ortho", "confidence"}
+
+
+def test_ode_rejects_unknown_product() -> None:
+    with pytest.raises(ValueError):
+        af.LROCNACDTM(products=["slope"])
+
+
+# --- MosaicDataset -------------------------------------------------------
+
+
+def test_mosaic_dataset_reads_fixed_href_without_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen_hrefs: list[str] = []
+
+    def _spy(href, grid, band=1, resampling=None, nodata_override=None):
+        seen_hrefs.append(href)
+        return _fake_read_window(href, grid, band, resampling, nodata_override)
+
+    monkeypatch.setattr(ds.raster, "read_window", _spy)
+    monkeypatch.setattr(
+        ds.ode,
+        "query_products",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("MosaicDataset must not search ODE")),
+    )
+    moondata = af.LROCWACMosaic(patch_size=8, length=1, seed=0)
+    sample = moondata[0]
+    assert set(sample) == SAMPLE_KEYS
+    assert sample["image"].shape == (1, 8, 8)
+    assert seen_hrefs == [ds.endpoints.LROC_WAC_MOSAIC_100M_URL]
+
+
+def test_lola_and_sldem_read_their_fixed_hrefs(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen_hrefs: list[str] = []
+    monkeypatch.setattr(
+        ds.raster,
+        "read_window",
+        lambda href, grid, band=1, resampling=None, nodata_override=None: (
+            seen_hrefs.append(href),
+            _fake_read_window(href, grid),
+        )[1],
+    )
+    af.LOLA(patch_size=8, length=1, seed=0)[0]
+    af.SLDEM2015(patch_size=8, length=1, seed=0)[0]
+    assert seen_hrefs == [ds.endpoints.LOLA_DEM_128_URL, ds.endpoints.SLDEM2015_URL]
+
+
+# --- footprint-constrained sampling ---------------------------------------
+
+_FOOTPRINTS = [(-60.0, 5.0, -59.0, 6.0), (10.0, -20.0, 11.0, -19.0)]
+
+
+def _fake_footprint_products(*_args, **_kwargs) -> list:
+    return [
+        ds.ode.ODEProduct(pdsid=f"p{i}", files=(), bbox=fp, metadata={})
+        for i, fp in enumerate(_FOOTPRINTS)
+    ]
+
+
+def test_footprint_sampling_draws_windows_inside_a_footprint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ds.ode, "query_products", _fake_footprint_products)
+    moondata = af.LROCNACDTM(products=["dtm"], patch_size=8, length=20, seed=0)
+    assert moondata.footprint_sampling is True
+    for sample in moondata:
+        west, south, east, north = sample["bbox"]
+        assert any(
+            fw <= west and east <= fe and fs <= south and north <= fn
+            for fw, fs, fe, fn in _FOOTPRINTS
+        )
+
+
+def test_footprint_sampling_is_reproducible(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ds.ode, "query_products", _fake_footprint_products)
+
+    def sampler() -> af.LROCNACDTM:
+        return af.LROCNACDTM(products=["dtm"], patch_size=8, length=3, seed=7)
+
+    first = [s["bbox"] for s in sampler()]
+    second = [s["bbox"] for s in sampler()]
+    assert first == second
+
+
+def test_footprint_sampling_falls_back_to_uniform_with_no_footprints() -> None:
+    # Default autouse fixture's fake query_products returns [].
+    moondata = af.LROCNACDTM(
+        products=["dtm"], bbox=(-60.0, 5.0, -55.0, 10.0), patch_size=8, length=1, seed=0
+    )
+    west, south, east, north = moondata[0]["bbox"]
+    assert -60.0 <= west and east <= -55.0
+    assert 5.0 <= south and north <= 10.0
+
+
+def test_footprint_sampling_can_be_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+    monkeypatch.setattr(
+        ds.ode, "query_products", lambda *a, **k: calls.append(1) or _fake_footprint_products()
+    )
+    moondata = af.LROCNACDTM(
+        products=["dtm"],
+        bbox=(-60.0, 5.0, -55.0, 10.0),
+        patch_size=8,
+        length=1,
+        seed=0,
+        footprint_sampling=False,
+    )
+    _ = moondata[0]
+    assert calls == []
+
+
+# --- catalog / registry for the new datasets ------------------------------
+
+
+def test_catalog_includes_lro_probe() -> None:
+    lro = MOON.probes["lro"]
+    assert lro.instruments["nac_dtm"].dataset is af.LROCNACDTM
+    assert lro.instruments["wac_mosaic"].dataset is af.LROCWACMosaic
+    assert lro.instruments["lola"].dataset is af.LOLA
+    assert lro.instruments["sldem2015"].dataset is af.SLDEM2015
+    assert lro.granules["nac_raw"] is af.LROCNACRaw
+    assert lro.granules["wac_raw"] is af.LROCWACRaw
+
+
+def test_catalog_includes_chandrayaan1_granules() -> None:
+    assert MOON.probes["chandrayaan1"].granules["m3"] is af.M3
+    assert MOON.probes["chandrayaan1"].instruments == {}
+
+
+def test_registry_agrees_for_ode_layer() -> None:
+    spec = MOON.probes["lro"].instruments["nac_dtm"].products["dtm"]
+    assert spec is LAYERS["lroc_nac_dtm"]
+    assert spec.source == "ode"
+    assert spec.ihid == "LRO"
+    assert spec.iid == "LROC"
+    assert spec.pt == "SDNDTM"
+
+
+def test_registry_agrees_for_mosaic_layer() -> None:
+    spec = MOON.probes["lro"].instruments["wac_mosaic"].products["morphology"]
+    assert spec is LAYERS["lroc_wac_mosaic"]
+    assert spec.source == "mosaic"
+    assert spec.href == ds.endpoints.LROC_WAC_MOSAIC_100M_URL
+
+
+def test_registry_marks_stac_layers_with_source() -> None:
+    assert LAYERS["kaguya_tc_dtm"].source == "stac"
